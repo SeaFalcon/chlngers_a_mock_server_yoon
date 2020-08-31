@@ -1,0 +1,112 @@
+tags:
+  name: Users
+  description: 회원 API
+definitions:
+  Auth_response:
+    type: object
+    required:
+      - status
+    properties:
+      userInfo:
+        type: object
+        description: 계정 정보
+        properties:
+          id:
+            type: number
+            description: user id
+          email:
+            type: string
+            description: user email
+          password:
+            type: string
+            description: user password
+          nickname:
+            type: string
+            description: user nickname
+          isDeleted:
+            type: string
+            description: user account status
+        example:
+          id: 12
+          email: abc@def.com
+          password: fa585d89c851dd338a70dcf535aa2a92fee7836dd6aff1226583e88e0996293f16bc009c652826e0fc5c706695a03cddce372f139eff4d13959da6f1f5d3eabe
+          nickname: nick
+          isDeleted: N
+      jwt:
+        type: string
+        description: JSON web token
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ5b29uQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoiZmE1ODVkODljODUxZGQzMzhhNzBkY2Y1MzVhYTJhOTJmZWU3ODM2ZGQ2YWZmMTIyNjU4M2U4OGUwOTk2MjkzZjE2YmMwMDljNjUyODI2ZTBmYzVjNzA2Njk1YTAzY2RkY2UzNzJmMTM5ZWZmNGQxMzk1OWRhNmYxZjVkM2VhYmUiLCJuaWNrbmFtZSI6Illvb24iLCJpYXQiOjE1OTg4NzQ3ODMsImV4cCI6MTYzMDQxMDc4Mywic3ViIjoidXNlckluZm8ifQ.2wzS0-FF9LYAHwVzKv0GR1U6L1CAUL1s0SR8YTF9w_g
+      isSuccess:
+        type: string
+        description: 로그인 성공 여부 - true, false
+        example: true
+      code:
+        type: number
+        description: 코드
+        example: 200
+      message:
+        type: string
+        description: 결과 메시지
+        example: 로그인 성공
+  Join_Success:
+    type: object
+    properties:
+      isSuccess:
+        type: string
+        description: 로그인 성공 여부 - true, false
+        example: true
+      code:
+        type: number
+        description: 코드
+        example: 200
+      message:
+        type: string
+        description: 결과 메시지
+        example: 회원가입 성공
+  Auth_Success:
+    type: object
+    properties:
+      isSuccess:
+        type: string
+        description: 로그인 성공 여부 - true, false
+        example: true
+      code:
+        type: number
+        description: 코드
+        example: 200
+      message:
+        type: string
+        description: 결과 메시지
+        example: 검증 성공
+      info:
+        type: object
+        description: 계정 정보
+        properties:
+          id:
+            type: number
+            description: user id
+            example: 1
+          email:
+            type: string
+            description: user email
+            example: yoon@gmail.com
+          password:
+            type: string
+            description: user password
+            example: fa585d89c851dd338a70dcf535aa2a92fee7836dd6aff1226583e88e0996293f16bc009c652826e0fc5c706695a03cddce372f139eff4d13959da6f1f5d3eabe
+          nickname:
+            type: string
+            description: user nickname
+            example: Yoon
+          iat:
+            type: number
+            description: 
+            example: 1598863204
+          exp:
+            type: number
+            description: 
+            example: 1630399204
+          sub:
+            type: string
+            description: subject
+            example: userInfo

@@ -1,4 +1,5 @@
-module.exports = function(app){
-    const index = require('../controllers/indexController');
-    app.get('/webAdmin', index.default);
+const index = require('../controllers/indexController');
+
+module.exports = (app) => {
+  app.get('/webAdmin', index.default);
 };

@@ -1,29 +1,44 @@
 const express = require('express');
 const compression = require('compression');
 const methodOverride = require('method-override');
-var cors = require('cors');
-module.exports = function () {
-    const app = express();
+const cors = require('cors');
 
-    app.use(compression());
+// Add Swagger
+const { swaggerSpec, swaggerUi } = require('./swagger');
 
-    app.use(express.json());
+const indexRoute = require('../src/app/routes/indexRoute');
+const userRoute = require('../src/app/routes/userRoute');
 
-    app.use(express.urlencoded({extended: true}));
+module.exports = () => {
+  const app = express();
 
-    app.use(methodOverride());
+  app.use(compression());
 
-    app.use(cors());
-    // app.use(express.static(process.cwd() + '/public'));
+  app.use(express.json());
 
-    /* App (Android, iOS) */
-    require('../src/app/routes/indexRoute')(app);
-    require('../src/app/routes/userRoute')(app);
+  app.use(express.urlencoded({ extended: true }));
 
-    /* Web */
-    // require('../src/web/routes/indexRoute')(app);
+  app.use(methodOverride());
 
-    /* Web Admin*/
-    // require('../src/web-admin/routes/indexRoute')(app);
-    return app;
+  app.use(cors());
+  // app.use(express.static(process.cwd() + '/public'));
+
+  // swagger 처리
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+  app.get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+
+  /* App (Android, iOS) */
+  indexRoute(app);
+  userRoute(app);
+
+  /* Web */
+  // require('../src/web/routes/indexRoute')(app);
+
+  /* Web Admin */
+  // require('../src/web-admin/routes/indexRoute')(app);
+  return app;
 };
