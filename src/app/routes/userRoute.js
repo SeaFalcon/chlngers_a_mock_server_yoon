@@ -52,6 +52,7 @@ module.exports = (app) => {
   app.patch(
     '/user/:id/profileImageUrl',
     jwtMiddleware,
+    updateValidation.profileImageUrl,
     user.update.profileImageUrl,
   );
 

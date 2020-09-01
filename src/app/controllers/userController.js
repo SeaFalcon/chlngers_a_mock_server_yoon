@@ -12,23 +12,6 @@ const database = require('../../../config/database');
 
 const { findUserInfoByEmail } = require('../utils/function');
 
-/**
- * @swagger
- * /check:
- *  get:
- *    security:
- *      - jwt: []
- *    tags:
- *      - Users
- *    description: Validate JWT token
- *    produces:
- *      - application/json
- *    responses:
- *       200:
- *         description: Authentication check success
- *         schema:
- *           $ref: "#/definitions/Auth_Success"
- */
 exports.check = async (req, res) => {
   res.json({
     isSuccess: true,
@@ -38,44 +21,6 @@ exports.check = async (req, res) => {
   });
 };
 
-/**
- * @swagger
- *
- * /user:
- *   post:
- *     description: Join to the application (Create User)
- *     tags:
- *      - Users
- *     produces:
- *       - application/json
- *     parameters:
- *       - name: email
- *         description: User's email to use for login.
- *         in: formData
- *         required: true
- *         type: string
- *       - name: nickname
- *         description: User's nickname.
- *         in: formData
- *         required: true
- *         type: string
- *       - name: name
- *         description: User's name.
- *         in: formData
- *         required: true
- *         type: string
- *       - name: password
- *         description: User's password.
- *         in: formData
- *         required: true
- *         type: string
- *
- *     responses:
- *       200:
- *         description: Join success
- *         schema:
- *           $ref: "#/definitions/Join_Success"
- */
 exports.join = async (req, res) => {
   const connection = await database.singletonDBConnection.getInstance();
   if (typeof connection !== 'object') {
@@ -121,34 +66,6 @@ exports.join = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- *
- * /login:
- *   post:
- *     description: Log in to the application
- *     tags:
- *       - Users
- *     produces:
- *       - application/json
- *     parameters:
- *       - name: email
- *         description: User's email to use for login.
- *         in: formData
- *         required: true
- *         type: string
- *       - name: password
- *         description: User's password.
- *         in: formData
- *         required: true
- *         type: string
- *
- *     responses:
- *       200:
- *         description: Log in success
- *         schema:
- *           $ref: "#/definitions/Auth_response"
- */
 exports.login = async (req, res) => {
   const connection = await database.singletonDBConnection.getInstance();
   if (typeof connection !== 'object') {
@@ -173,8 +90,12 @@ exports.login = async (req, res) => {
     const token = await jwt.sign({
       id: userInfoRows[0].id,
       email,
-      password: hashedPassword,
+      // password: hashedPassword,
       nickname: userInfoRows[0].nickname,
+      profileImageUrl: userInfoRows[0].profileImageUrl || '',
+      introduction: userInfoRows[0].introduction || '',
+      phoneNumber: userInfoRows[0].phoneNumber || '',
+      isDeleted: userInfoRows[0].isDeleted,
     }, // 토큰의 내용(payload)
     secretConfig.jwtsecret, // 비밀 키
     {
@@ -207,11 +128,7 @@ exports.update = {
       return res.status(500).send(`Error: ${connection}`);
     }
 
-    const token = req.headers['x-access-token'] || req.query.token;
-
-    const { id: userId } = jwt.verify(token, secretConfig.jwtsecret);
-
-    const { nickname } = req.body;
+    const { verifiedToken: { id: userId }, body: { nickname } } = req;
 
     const errors = validationResult(req);
 
@@ -251,11 +168,7 @@ exports.update = {
       return res.status(500).send(`Error: ${connection}`);
     }
 
-    const token = req.headers['x-access-token'] || req.query.token;
-
-    const { id: userId } = jwt.verify(token, secretConfig.jwtsecret);
-
-    const { introduction } = req.body;
+    const { verifiedToken: { id: userId }, body: { introduction } } = req;
 
     try {
       await connection.beginTransaction(); // START TRANSACTION
@@ -288,11 +201,7 @@ exports.update = {
       return res.status(500).send(`Error: ${connection}`);
     }
 
-    const token = req.headers['x-access-token'] || req.query.token;
-
-    const { id: userId } = jwt.verify(token, secretConfig.jwtsecret);
-
-    const { profileImageUrl } = req.body;
+    const { verifiedToken: { id: userId }, body: { profileImageUrl } } = req;
 
     const errors = validationResult(req);
 
@@ -332,11 +241,7 @@ exports.update = {
       return res.status(500).send(`Error: ${connection}`);
     }
 
-    const token = req.headers['x-access-token'] || req.query.token;
-
-    const { id: userId } = jwt.verify(token, secretConfig.jwtsecret);
-
-    const { password } = req.body;
+    const { verifiedToken: { id: userId }, body: { password } } = req;
 
     const errors = validationResult(req);
 
@@ -381,9 +286,7 @@ exports.delete = async (req, res) => {
     return res.status(500).send(`Error: ${connection}`);
   }
 
-  const token = req.headers['x-access-token'] || req.query.token;
-
-  const { id: userId } = jwt.verify(token, secretConfig.jwtsecret);
+  const { verifiedToken: { id: userId } } = req;
 
   try {
     await connection.beginTransaction(); // START TRANSACTION

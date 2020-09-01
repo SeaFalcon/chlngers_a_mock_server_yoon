@@ -106,5 +106,8 @@ module.exports = {
         },
       },
     }),
+    profileImageUrl: body('profileImageUrl')
+      .isURL({})
+      .withMessage({ code: 310, message: 'This url format is not valid.' }),
   },
 };

@@ -30,8 +30,9 @@ const options = {
   swaggerDefinition,
   // Path to the API docs
   apis: [
-    './src/app/controllers/userController.js',
-    './src/app/userSchema/users.yaml',
+    // './src/app/controllers/userController.js',
+    // './src/app/userSchema/users.yaml',
+    './src/app/api-docs/users/*.yaml',
   ],
 };
 
