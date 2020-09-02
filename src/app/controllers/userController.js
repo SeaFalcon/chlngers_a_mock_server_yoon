@@ -398,6 +398,14 @@ exports.snsLogin = async (req, res) => {
         password, nickname, email, profileImageUrl,
       }),
     },
+    naver: {
+      url: 'https://openapi.naver.com/v1/nid/me',
+      getUserInfo: ({
+        id: password, nickname, profile_image: profileImageUrl, email,
+      }) => ({
+        password, nickname, email, profileImageUrl,
+      }),
+    },
   };
 
   const authOptions = {
