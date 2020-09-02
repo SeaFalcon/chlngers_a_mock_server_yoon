@@ -56,5 +56,6 @@ module.exports = {
     'no-console': 'off',
     'prefer-promise-reject-errors': 'off',
     'max-len': 'off',
+    'consistent-return': 'off',
   },
 };
