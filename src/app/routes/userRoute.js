@@ -23,6 +23,21 @@ module.exports = (app) => {
     loginValidation.checkUser,
     user.login,
   );
+  app.post(
+    '/kakaoLogin',
+    loginValidation.sns,
+    user.kakaoLogin,
+  );
+  app.post(
+    '/facebookLogin',
+    loginValidation.sns,
+    user.facebookLogin,
+  );
+  app.post(
+    '/snsLogin/:snsName',
+    loginValidation.sns,
+    user.snsLogin,
+  );
 
   // select
   app.get(
@@ -33,31 +48,32 @@ module.exports = (app) => {
 
   // update
   app.patch(
-    '/user/:id/introduction',
+    '/user/introduction',
     jwtMiddleware,
     user.update.introduction,
   );
   app.patch(
-    '/user/:id/nickname',
+    '/user/nickname',
     jwtMiddleware,
     userValidation.checkNicknameDuplicate,
     user.update.nickname,
   );
   app.patch(
-    '/user/:id/password',
+    '/user/password',
     jwtMiddleware,
     updateValidation.password,
     user.update.password,
   );
   app.patch(
-    '/user/:id/profileImageUrl',
+    '/user/profileImageUrl',
     jwtMiddleware,
+    updateValidation.profileImageUrl,
     user.update.profileImageUrl,
   );
 
   // delete
   app.delete(
-    '/user/:id',
+    '/user',
     jwtMiddleware,
     user.delete,
   );

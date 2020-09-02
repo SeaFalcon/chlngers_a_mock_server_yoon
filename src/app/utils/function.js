@@ -23,7 +23,10 @@ module.exports = {
   },
   findUserInfoByEmail: async (connection, email) => {
     const selectUserInfoQuery = `
-                SELECT id, email, password, nickname, isDeleted
+                SELECT id, email, password, nickname, isDeleted, 
+                       IFNULL(profileImageUrl, '') as profileImageUrl,
+                       IFNULL(introduction, '') as introduction,
+                       IFNULL(phoneNumber, '') as phoneNumber
                 FROM User 
                 WHERE email = ?;
                 `;
