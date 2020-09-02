@@ -23,6 +23,21 @@ module.exports = (app) => {
     loginValidation.checkUser,
     user.login,
   );
+  app.post(
+    '/kakaoLogin',
+    loginValidation.sns,
+    user.kakaoLogin,
+  );
+  app.post(
+    '/facebookLogin',
+    loginValidation.sns,
+    user.facebookLogin,
+  );
+  app.post(
+    '/snsLogin/:snsName',
+    loginValidation.sns,
+    user.snsLogin,
+  );
 
   // select
   app.get(

@@ -94,6 +94,9 @@ module.exports = {
 
         return {};
       }),
+    sns: body('accessToken')
+      .notEmpty()
+      .withMessage({ code: 310, message: 'This accessToken format is not valid.' }),
   },
   updateValidation: {
     password: checkSchema({
@@ -108,6 +111,6 @@ module.exports = {
     }),
     profileImageUrl: body('profileImageUrl')
       .isURL({})
-      .withMessage({ code: 310, message: 'This url format is not valid.' }),
+      .withMessage({ code: 311, message: 'This url format is not valid.' }),
   },
 };
