@@ -1,4 +1,8 @@
 module.exports = {
+  requestQueryResult: async (connection, query, ...params) => {
+    const [result] = await connection.query(query, params);
+    return result;
+  },
   findUserByEmail: async (connection, email) => {
     const selectEmailQuery = `
               SELECT email, name 

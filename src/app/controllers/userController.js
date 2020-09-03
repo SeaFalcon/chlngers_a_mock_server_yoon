@@ -12,7 +12,8 @@ const secretConfig = require('../../../config/secret');
 
 const database = require('../../../config/database');
 
-const { findUserInfoByEmail } = require('../utils/function');
+const { findUserInfoByEmail, requestQueryResult } = require('../utils/function');
+const queries = require('../utils/queries');
 
 exports.check = async (req, res) => {
   res.json({
@@ -389,6 +390,7 @@ exports.snsLogin = async (req, res) => {
       }) => ({
         password, nickname, email, profileImageUrl,
       }),
+      errorCode: { code: 312, message: 'AccessToken not valid, Facebook Login Failed.' },
     },
     kakao: {
       url: 'https://kapi.kakao.com/v2/user/me',
@@ -397,6 +399,7 @@ exports.snsLogin = async (req, res) => {
       }) => ({
         password, nickname, email, profileImageUrl,
       }),
+      errorCode: { code: 313, message: 'AccessToken not valid, Kakao Login Failed.' },
     },
     naver: {
       url: 'https://openapi.naver.com/v1/nid/me',
@@ -405,6 +408,7 @@ exports.snsLogin = async (req, res) => {
       }) => ({
         password, nickname, email, profileImageUrl,
       }),
+      errorCode: { code: 314, message: 'AccessToken not valid, naver Login Failed.' },
     },
   };
 
@@ -516,13 +520,58 @@ exports.snsLogin = async (req, res) => {
         }
       }
     } else {
-      res.json({ code: 312, message: 'Kakao Login Failed.' });
+      res.json(snsInfo[snsName].errorCode);
     }
     return {};
   });
 };
 
-exports.get = async (req, res) => {
+exports.getUserPage = async (req, res) => {
+  const connection = await database.singletonDBConnection.getInstance();
+  if (typeof connection !== 'object') {
+    return res.status(500).send(`Error: ${connection}`);
+  }
+
+  const { params: { id: userId }, verifiedToken } = req;
+
+  console.log(verifiedToken);
+
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const result = errors.errors.map((error) => error.msg);
+    return res.status(400).json({ success: false, errors: [...result] });
+  }
+
+  try {
+    const userInfoRows = await requestQueryResult(connection, queries.mypage.user, [userId]);
+    const followers = await requestQueryResult(connection, queries.mypage.follower, [userId]);
+    const followings = await requestQueryResult(connection, queries.mypage.following, [userId]);
+    const interestFields = await requestQueryResult(connection, queries.mypage.interestField, [userId]);
+    const everydayRecords = await requestQueryResult(connection, queries.mypage.everydayRecord, [userId]);
+    const todayChallenges = await requestQueryResult(connection, queries.mypage.todayChallenge, [userId]);
+
+    const myPageInfo = {
+      ...userInfoRows[0],
+      followerCount: followers.length,
+      followingCount: followings.length,
+      interestFields: interestFields.map((field) => field.tagName),
+      everydayRecords: everydayRecords.map((record) => record.record),
+      todayChallenges,
+    };
+
+    res.json({
+      myPageInfo,
+      isSuccess: true,
+      code: 200,
+      message: '마이페이지 조회 성공',
+    });
+    return connection.release();
+  } catch (err) {
+    logger.error(`App - SignIn Query error\n: ${JSON.stringify(err)}`);
+    connection.release();
+    return false;
+  }
 };
 
 exports.update = {

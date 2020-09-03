@@ -41,9 +41,9 @@ module.exports = (app) => {
 
   // select
   app.get(
-    '/user/:id',
+    '/user/:id/myPage',
     jwtMiddleware,
-    user.get,
+    user.getUserPage,
   );
 
   // update
