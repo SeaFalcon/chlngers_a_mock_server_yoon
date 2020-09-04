@@ -13,10 +13,6 @@ function makeSuccessResponse(message) {
 }
 
 module.exports = {
-  requestQueryResult: async (connection, query, ...params) => {
-    const [result] = await connection.query(query, params);
-    return result;
-  },
   makeSuccessResponse,
   snsInfo: {
     facebook: {

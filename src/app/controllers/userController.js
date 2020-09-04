@@ -1,7 +1,5 @@
 const crypto = require('crypto');
 
-const { validationResult } = require('express-validator');
-
 const request = require('request');
 
 const { requestTransactionQuery, requestNonTransactionQuery } = require('../../../config/database');

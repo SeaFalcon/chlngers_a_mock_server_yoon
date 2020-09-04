@@ -2,9 +2,8 @@ const { checkSchema, body } = require('express-validator');
 
 const crypto = require('crypto');
 
-const { singletonDBConnection } = require('../../../config/database');
+const { requestNonTransactionQuery } = require('../../../config/database');
 
-const { requestQueryResult } = require('../utils/function');
 const queries = require('../utils/queries');
 
 module.exports = {
@@ -37,10 +36,7 @@ module.exports = {
     }),
     checkEmailDuplicate: body('email')
       .custom(async (email) => {
-        const connection = await singletonDBConnection.getInstance();
-        
-        const user = await requestQueryResult(connection, queries.join.findUserByEmail, [email]);
-        // const user = await findUserByEmail(connection, email);
+        const { result: user } = await requestNonTransactionQuery(queries.join.findUserByEmail, [email]);
 
         if (user.length) {
           return Promise.reject({ code: 305, message: 'E-mail already in use' });
@@ -49,10 +45,7 @@ module.exports = {
       }),
     checkNicknameDuplicate: body('nickname')
       .custom(async (nickname) => {
-        const connection = await singletonDBConnection.getInstance();
-        
-        const user = await requestQueryResult(connection, queries.join.findUserByNickname, [nickname]);
-        // const user = await findUserByNickname(connection, nickname);
+        const { result: user } = await requestNonTransactionQuery(queries.join.findUserByNickname, [nickname]);
 
         if (user.length) {
           return Promise.reject({ code: 306, message: 'Nickname already in use' });
@@ -79,11 +72,7 @@ module.exports = {
     }),
     checkUser: body('email')
       .custom(async (email, { req: { body: postData } }) => {
-        // console.log(email, postData);
-        const connection = await singletonDBConnection.getInstance();
-
-        const user = await requestQueryResult(connection, queries.login.findUserInfoByEmail, [email]);
-        // const user = await findUserInfoByEmail(connection, email);
+        const {result: user} = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
 
         // check email
         if (user.length < 1) {
