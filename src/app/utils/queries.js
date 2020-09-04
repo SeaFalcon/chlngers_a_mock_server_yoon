@@ -23,7 +23,26 @@ module.exports = {
   },
   update: {
     user: {
-
+      nickname: `
+        UPDATE user
+        SET nickname=?
+        WHERE userId=?;
+      `,
+      introduction: `
+        UPDATE user
+        SET introduction=?
+        WHERE userId=?;
+      `,
+      profileImageUrl: `
+        UPDATE user
+        SET profileImageUrl=?
+        WHERE userId=?;
+      `,
+      password: `
+        UPDATE user
+        SET password=?
+        WHERE userId=?;
+      `,
     }
   },
   delete: {

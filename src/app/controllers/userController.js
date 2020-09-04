@@ -274,11 +274,6 @@ exports.getUserPage = async (req, res) => {
 
 exports.update = {
   nickname: async (req, res) => {
-    const connection = await database.singletonDBConnection.getInstance();
-    if (typeof connection !== 'object') {
-      return res.status(500).send(`Error: ${connection}`);
-    }
-
     const { verifiedToken: { id: userId }, body: { nickname } } = req;
 
     const errors = validationResult(req);
@@ -288,28 +283,17 @@ exports.update = {
       return res.status(400).json({ success: false, errors: [...result] });
     }
 
-    try {
-      await connection.beginTransaction(); // START TRANSACTION
 
-      const updateNicknameQuery = `
-                    UPDATE user
-                    SET nickname=?
-                    WHERE userId=?;
-                        `;
-      const updateNicknameParams = [nickname, userId];
-      await connection.query(updateNicknameQuery, updateNicknameParams);
+    const result = await database.requestTransactionQuery(queries.update.user.nickname, [nickname, userId]);
 
-      await connection.commit(); // COMMIT
-      connection.release();
+    if (result) {
       return res.json({
         ...makeSuccessResponse('닉네임 수정 성공'),
       });
-    } catch (err) {
-      await connection.rollback(); // ROLLBACK
-      connection.release();
-      logger.error(`App - SignUp Query error\n: ${err.message}`);
-      return res.status(500).send(`Error: ${err.message}`);
     }
+
+    logger.error(`App - SignUp Query error\n: ${err.message}`);
+    return res.status(500).send(`Error: ${err.message}`);
   },
   introduction: async (req, res) => {
     const connection = await database.singletonDBConnection.getInstance();
