@@ -10,6 +10,10 @@ module.exports = {
             FROM user 
             WHERE nickname = ?;
             `,
+    insert: `
+      INSERT INTO user(email, password, name, nickname)
+      VALUES (?, ?, ?, ?);
+    `
   },
   login: {
     findUserInfoByEmail: `
