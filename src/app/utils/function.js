@@ -52,10 +52,10 @@ module.exports = {
 
     if (!errors.isEmpty()) {
       const result = errors.errors.map((error) => error.msg);
-      return res.status(400).json({ success: false, errors: [...result] });
+      return { success: false, errors: [...result] };
     }
 
-    return true;
+    return { success: true };
   },
   makeLoginResponse: async ({ userId, email, nickname, profileImageUrl, phoneNumber, isDeleted, introduction }) => {
     const userInfo = {

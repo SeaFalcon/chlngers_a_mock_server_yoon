@@ -4,11 +4,9 @@ const { validationResult } = require('express-validator');
 
 const request = require('request');
 
-const { logger } = require('../../../config/winston');
-
 const { requestTransactionQuery, requestNonTransactionQuery } = require('../../../config/database');
 
-const { requestQueryResult, makeSuccessResponse, snsInfo, makeLoginResponse } = require('../utils/function');
+const { makeSuccessResponse, snsInfo, makeLoginResponse, getValidationResult } = require('../utils/function');
 
 const queries = require('../utils/queries');
 
@@ -20,15 +18,11 @@ exports.check = async (req, res) => {
 };
 
 exports.join = async (req, res) => {
-  const {
-    name, email, password, nickname,
-  } = req.body;
+  const { name, email, password, nickname } = req.body;
 
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const result = errors.errors.map((error) => error.msg);
-    return res.status(400).json({ success: false, errors: [...result] });
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors)
   }
 
   const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
@@ -41,18 +35,15 @@ exports.join = async (req, res) => {
     });
   }
 
-  logger.error(`App - SignUp Query error\n: ${err.message}`);
   return res.status(500).send(`Error: ${err.message}`);
 };
 
 exports.login = async (req, res) => {
   const { email } = req.body;
 
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const result = errors.errors.map((error) => error.msg);
-    return res.status(400).json({ success: false, errors: [...result] });
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors)
   }
 
   const { isSuccess, result } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
@@ -63,18 +54,15 @@ exports.login = async (req, res) => {
     return res.json(response);
   }
 
-  logger.error(`App - SignUp Query error\n: ${userInfoRows.message}`);
   return res.status(500).send(`Error: ${result.message}`);
 };
 
 exports.snsLogin = async (req, res) => {
   const { body: { accessToken }, params: { snsName } } = req;
 
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const result = errors.errors.map((error) => error.msg);
-    return res.status(400).json({ success: false, errors: [...result] });
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors)
   }
 
   const authOptions = {
@@ -110,11 +98,9 @@ exports.snsLogin = async (req, res) => {
           return res.json(loginResponse);
         }
 
-        logger.error(`App - SignUp Query error\n: ${result}`);
         return res.status(500).send(`Error: ${joinResult.message}`);
       }
-      
-      logger.error(`App - SignUp Query error\n: ${result.message}`);
+
       return res.status(500).send(`Error: ${findUserResult.message}`);
     } else {
       return res.json(snsInfo[snsName].errorCode);
@@ -123,32 +109,21 @@ exports.snsLogin = async (req, res) => {
 };
 
 exports.getUserPage = async (req, res) => {
-  const connection = await singletonDBConnection.getInstance();
-  if (typeof connection !== 'object') {
-    return res.status(500).send(`Error: ${connection}`);
-  }
-
   const { params: { id: userId }, verifiedToken } = req;
 
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const result = errors.errors.map((error) => error.msg);
-    return res.status(400).json({ success: false, errors: [...result] });
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors)
   }
 
-  try {
-    const userInfoRows = await requestQueryResult(connection, queries.mypage.user, [userId]);
-    const followers = await requestQueryResult(connection, queries.mypage.follower, [userId]);
-    const followings = await requestQueryResult(connection, queries.mypage.following, [userId]);
-    const interestFields = await requestQueryResult(connection, queries.mypage.interestField, [userId]);
-    const everydayRecords = await requestQueryResult(connection, queries.mypage.everydayRecord, [userId]);
-    const todayChallenges = await requestQueryResult(connection, queries.mypage.todayChallenge, [userId]);
+  const { isSuccess: userInfoRowsSuccess, result: userInfoRows } = await requestNonTransactionQuery(queries.mypage.user, [userId]);
+  const { isSuccess: followersSuccess, result: followers } = await requestNonTransactionQuery(queries.mypage.follower, [userId]);
+  const { isSuccess: followingsSuccess, result: followings } = await requestNonTransactionQuery(queries.mypage.following, [userId]);
+  const { isSuccess: interestFieldsSuccess, result: interestFields } = await requestNonTransactionQuery(queries.mypage.interestField, [userId]);
+  const { isSuccess: everydayRecordsSuccess, result: everydayRecords } = await requestNonTransactionQuery(queries.mypage.everydayRecord, [userId]);
+  const { isSuccess: todayChallengesSuccess, result: todayChallenges } = await requestNonTransactionQuery(queries.mypage.todayChallenge, [userId]);
 
-    const ex = await requestNonTransactionQuery(queries.mypage.user, [userId]);
-
-    console.log(ex);
-
+  if (userInfoRowsSuccess && followersSuccess && followingsSuccess && interestFieldsSuccess && everydayRecordsSuccess && todayChallengesSuccess) {
     const myPageInfo = {
       ...userInfoRows[0],
       followerCount: followers.length,
@@ -158,27 +133,22 @@ exports.getUserPage = async (req, res) => {
       todayChallenges,
     };
 
-    res.json({
+    return res.json({
       myPageInfo,
       ...makeSuccessResponse('마이페이지 조회 성공'),
     });
-    return connection.release();
-  } catch (err) {
-    logger.error(`App - SignIn Query error\n: ${JSON.stringify(err)}`);
-    connection.release();
-    return false;
   }
+
+  return res.status(500).send(`Error: 마이페이지 조회 실패`);
 };
 
 exports.update = {
   nickname: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { nickname } } = req;
 
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      const result = errors.errors.map((error) => error.msg);
-      return res.status(400).json({ success: false, errors: [...result] });
+    const errors = getValidationResult(req)
+    if (!errors.success) {
+      return res.status(400).json(errors)
     }
 
     const { isSuccess, result } = await requestTransactionQuery(queries.update.user.nickname, [nickname, userId]);
@@ -189,7 +159,6 @@ exports.update = {
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${result.message}`);
     return res.status(500).send(`Error: ${result.message}`);
   },
   introduction: async (req, res) => {
@@ -203,17 +172,14 @@ exports.update = {
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${result.message}`);
     return res.status(500).send(`Error: ${result.message}`);
   },
   profileImageUrl: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { profileImageUrl } } = req;
 
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      const result = errors.errors.map((error) => error.msg);
-      return res.status(400).json({ success: false, errors: [...result] });
+    const errors = getValidationResult(req)
+    if (!errors.success) {
+      return res.status(400).json(errors)
     }
 
     const { isSuccess, result } = await requestTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
@@ -224,17 +190,14 @@ exports.update = {
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${result.message}`);
     return res.status(500).send(`Error: ${result.message}`);
   },
   password: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { password } } = req;
 
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      const result = errors.errors.map((error) => error.msg);
-      return res.status(400).json({ success: false, errors: [...result] });
+    const errors = getValidationResult(req)
+    if (!errors.success) {
+      return res.status(400).json(errors)
     }
 
     const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
@@ -247,7 +210,6 @@ exports.update = {
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${result.message}`);
     return res.status(500).send(`Error: ${result.message}`);
   },
 };
@@ -263,6 +225,5 @@ exports.delete = async (req, res) => {
     });
   }
 
-  logger.error(`App - SignUp Query error\n: ${result.message}`);
   return res.status(500).send(`Error: ${result.message}`);
 };
