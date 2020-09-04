@@ -3,53 +3,38 @@ module.exports = {
     const [result] = await connection.query(query, params);
     return result;
   },
-  findUserByEmail: async (connection, email) => {
-    const selectEmailQuery = `
-              SELECT email, name 
-              FROM User 
-              WHERE email = ?;
-              `;
-    const selectEmailParams = [email];
-    const [emailRows] = await connection.query(selectEmailQuery, selectEmailParams);
-
-    return emailRows;
-  },
-  findUserByNickname: async (connection, nickname) => {
-    const selectNicknameQuery = `
-              SELECT email, name 
-              FROM User 
-              WHERE nickname = ?;
-              `;
-    const selectNicknameParams = [nickname];
-    const [nameRows] = await connection.query(selectNicknameQuery, selectNicknameParams);
-
-    return nameRows;
-  },
-  findUserInfoByEmail: async (connection, email) => {
-    const selectUserInfoQuery = `
-                SELECT userId, email, password, nickname, isDeleted, 
-                       IFNULL(profileImageUrl, '') as profileImageUrl,
-                       IFNULL(introduction, '') as introduction,
-                       IFNULL(phoneNumber, '') as phoneNumber
-                FROM User 
-                WHERE email = ?;
-                `;
-
-    const selectUserInfoParams = [email];
-    const [userInfoRows] = await connection.query(selectUserInfoQuery, selectUserInfoParams);
-
-    return userInfoRows;
-  },
-  findUserInfoById: async (connection, id) => {
-    const selectUserInfoQuery = `
-                SELECT *
-                FROM User 
-                WHERE userId = ?;
-                `;
-
-    const selectUserInfoParams = [id];
-    const [userInfoRows] = await connection.query(selectUserInfoQuery, selectUserInfoParams);
-
-    return userInfoRows;
-  },
+  makeSuccessResponse: (message) => ({
+    isSuccess:true,
+    code:200,
+    message
+  }),
+  snsInfo: {
+    facebook: {
+      url: 'https://graph.facebook.com/v8.0/me?fields=id,name,email,picture.type(large){url}',
+      getUserInfo: ({
+        id: password, name: nickname, email, picture: { data: { url: profileImageUrl } },
+      }) => ({
+        password, nickname, email, profileImageUrl,
+      }),
+      errorCode: { code: 312, message: 'AccessToken not valid, Facebook Login Failed.' },
+    },
+    kakao: {
+      url: 'https://kapi.kakao.com/v2/user/me',
+      getUserInfo: ({
+        id: password, kakao_account: { profile: { nickname, thumbnail_image_url: profileImageUrl }, email },
+      }) => ({
+        password, nickname, email, profileImageUrl,
+      }),
+      errorCode: { code: 313, message: 'AccessToken not valid, Kakao Login Failed.' },
+    },
+    naver: {
+      url: 'https://openapi.naver.com/v1/nid/me',
+      getUserInfo: ({
+        id: password, nickname, profile_image: profileImageUrl, email,
+      }) => ({
+        password, nickname, email, profileImageUrl,
+      }),
+      errorCode: { code: 314, message: 'AccessToken not valid, naver Login Failed.' },
+    },
+  }
 };

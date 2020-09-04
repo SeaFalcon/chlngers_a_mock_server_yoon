@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "NODE_ENV=development node index.js",
-    "prod": "NODE_ENV=production node index.js"
+    "dev": "port=4444 nodemon index.js",
+    "prod": "port=3333 nodemon index.js",
+    "devForever": "forever start index.js&set port=4444",
+    "prodForever": "forever start index.js&set port=3333"
   },
   "repository": {
     "type": "git",

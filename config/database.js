@@ -6,9 +6,10 @@ const { mysqlConfig } = require('./secret');
 
 const pool = mysql.createPool(mysqlConfig);
 
-const exampleNonTransaction = async (sql, params) => {
+const requestNonTransactionQuery = async (sql, params) => {
   try {
-    const connection = await pool.getConnection(async (conn) => conn);
+    const connection = await singletonDBConnection.getInstance();
+    // const connection = await pool.getConnection(async (conn) => conn);
     try {
       const [rows] = await connection.query(sql, params);
       connection.release();
@@ -24,9 +25,10 @@ const exampleNonTransaction = async (sql, params) => {
   }
 };
 
-const exampleTransaction = async (sql, params) => {
+const requestTransactionQuery = async (sql, params) => {
   try {
-    const connection = await pool.getConnection(async (conn) => conn);
+    const connection = await singletonDBConnection.getInstance();
+    // const connection = await pool.getConnection(async (conn) => conn);
     try {
       await connection.beginTransaction(); // START TRANSACTION
       const [rows] = await connection.query(sql, params);
@@ -69,7 +71,7 @@ const singletonDBConnection = (function getSingletonDBConnection() {
 
 module.exports = {
   pool,
-  exampleNonTransaction,
-  exampleTransaction,
+  requestNonTransactionQuery,
+  requestTransactionQuery,
   singletonDBConnection,
 };

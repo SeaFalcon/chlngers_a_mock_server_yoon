@@ -4,7 +4,8 @@ const crypto = require('crypto');
 
 const { singletonDBConnection } = require('../../../config/database');
 
-const { findUserByEmail, findUserByNickname, findUserInfoByEmail } = require('../utils/function');
+const { requestQueryResult } = require('../utils/function');
+const queries = require('../utils/queries');
 
 module.exports = {
   userValidation: {
@@ -37,7 +38,10 @@ module.exports = {
     checkEmailDuplicate: body('email')
       .custom(async (email) => {
         const connection = await singletonDBConnection.getInstance();
-        const user = await findUserByEmail(connection, email);
+        
+        const user = await requestQueryResult(connection, queries.join.findUserByEmail, [email]);
+        // const user = await findUserByEmail(connection, email);
+
         if (user.length) {
           return Promise.reject({ code: 305, message: 'E-mail already in use' });
         }
@@ -46,7 +50,10 @@ module.exports = {
     checkNicknameDuplicate: body('nickname')
       .custom(async (nickname) => {
         const connection = await singletonDBConnection.getInstance();
-        const user = await findUserByNickname(connection, nickname);
+        
+        const user = await requestQueryResult(connection, queries.join.findUserByNickname, [nickname]);
+        // const user = await findUserByNickname(connection, nickname);
+
         if (user.length) {
           return Promise.reject({ code: 306, message: 'Nickname already in use' });
         }
@@ -74,7 +81,9 @@ module.exports = {
       .custom(async (email, { req: { body: postData } }) => {
         // console.log(email, postData);
         const connection = await singletonDBConnection.getInstance();
-        const user = await findUserInfoByEmail(connection, email);
+
+        const user = await requestQueryResult(connection, queries.login.findUserInfoByEmail, [email]);
+        // const user = await findUserInfoByEmail(connection, email);
 
         // check email
         if (user.length < 1) {

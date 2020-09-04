@@ -1,9 +1,10 @@
 const express = require('./config/express');
 const { logger } = require('./config/winston');
 
-const port = 3000;
+const port = process.env.port || 3000;
+
 express().listen(port);
-logger.info(`${process.env.NODE_ENV} - API Server Start At Port ${port}`);
+logger.info(`${process.env.port} - API Server Start At Port ${port}`);
 
 // const fs = require('fs');
 // const https = require('https');

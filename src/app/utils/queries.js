@@ -1,27 +1,38 @@
 module.exports = {
-  findUserByEmail: `
+  join: {
+    findUserByEmail: `
             SELECT email, name 
-            FROM User 
+            FROM user 
             WHERE email = ?;
             `,
-  findUserByNickname: `
+    findUserByNickname: `
             SELECT email, name 
-            FROM User 
+            FROM user 
             WHERE nickname = ?;
             `,
-  findUserInfoByEmail: `
+  },
+  login: {
+    findUserInfoByEmail: `
             SELECT userId, email, password, nickname, isDeleted, 
                     IFNULL(profileImageUrl, '') as profileImageUrl,
                     IFNULL(introduction, '') as introduction,
                     IFNULL(phoneNumber, '') as phoneNumber
-            FROM User 
+            FROM user 
             WHERE email = ?;
               `,
-  findUserInfoById: `
-            SELECT *
-            FROM User 
-            WHERE userId = ?;
-              `,
+  },
+  update: {
+    user: {
+
+    }
+  },
+  delete: {
+    user: `
+      UPDATE user
+      SET isDeleted=?
+      WHERE userId=?;
+    `,
+  },
   mypage: {
     user: `
       SELECT U.userId,
@@ -30,35 +41,35 @@ module.exports = {
           U.introduction,
           G.gradeId,
           G.gradeName
-      FROM User U
-            JOIN GRADE G ON U.experience >= G.experienceCriteriaMin AND U.experience <= G.experienceCriteriaMax
+      FROM user U
+            JOIN grade G ON U.experience >= G.experienceCriteriaMin AND U.experience <= G.experienceCriteriaMax
       WHERE U.userId = ?;
     `,
     follower: `
       SELECT *
-      FROM Friend
+      FROM friend
       WHERE userId2 = ?;
     `,
     following: `
       SELECT *
-      FROM Friend
+      FROM friend
       WHERE userId1 = ?;
     `,
     interestField: `
       SELECT HT.tagId, HT.tagName
-      FROM interesttag IT JOIN HashTag HT ON IT.tagId=HT.tagId
+      FROM interesttag IT JOIN hashtag HT ON IT.tagId=HT.tagId
       WHERE userId = ?;
     `,
     everydayRecord: `
       SELECT date(createdAt) as record
-      FROM ChallengeCertification
+      FROM challengecertification
       WHERE userId = ? and MONTH(NOW()) = MONTH(createdAt);
     `,
     todayChallenge: `
       SELECT C.challengeId, certificationId, photoUrl, C.startDay, C.endDay, COUNT(CC.userId) as participantCount
-      FROM ChallengeCertification CC
-              JOIN Challenge C ON CC.challengeId = C.challengeId
-              JOIN ChallengeParticipant CP on C.challengeId = CP.challengeId
+      FROM challengecertification CC
+              JOIN challenge C ON CC.challengeId = C.challengeId
+              JOIN challengeparticipant CP on C.challengeId = CP.challengeId
       WHERE CC.userId = ?
       GROUP BY certificationId, photoUrl, C.startDay, C.endDay;
     `,
