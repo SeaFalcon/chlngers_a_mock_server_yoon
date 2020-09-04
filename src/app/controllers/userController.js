@@ -1,5 +1,3 @@
-const jwt = require('jsonwebtoken');
-
 const crypto = require('crypto');
 
 const { validationResult } = require('express-validator');
@@ -8,11 +6,9 @@ const request = require('request');
 
 const { logger } = require('../../../config/winston');
 
-const secretConfig = require('../../../config/secret');
+const { requestTransactionQuery, requestNonTransactionQuery } = require('../../../config/database');
 
-const database = require('../../../config/database');
-
-const { requestQueryResult, makeSuccessResponse, snsInfo } = require('../utils/function');
+const { requestQueryResult, makeSuccessResponse, snsInfo, makeLoginResponse } = require('../utils/function');
 
 const queries = require('../utils/queries');
 
@@ -37,7 +33,7 @@ exports.join = async (req, res) => {
 
   const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
 
-  const result = await database.requestTransactionQuery(queries.join.insert, [email, hashedPassword, name, nickname]);
+  const result = await requestTransactionQuery(queries.join.insert, [email, hashedPassword, name, nickname]);
 
   if (result) {
     return res.json({
@@ -59,40 +55,20 @@ exports.login = async (req, res) => {
     return res.status(400).json({ success: false, errors: [...result] });
   }
 
-  const userInfoRows = await database.requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
+  const { isSuccess, result } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
 
-  const userInfo = {
-    id: userInfoRows[0].userId,
-    email,
-    nickname: userInfoRows[0].nickname,
-    profileImageUrl: userInfoRows[0].profileImageUrl || '',
-    introduction: userInfoRows[0].introduction || '',
-    phoneNumber: userInfoRows[0].phoneNumber || '',
-    isDeleted: userInfoRows[0].isDeleted,
-  };
+  if (isSuccess) {
+    const response = await makeLoginResponse(result[0]);
 
-  // 토큰 생성
-  const token = await jwt.sign(userInfo, // 토큰의 내용(payload)
-    secretConfig.jwtsecret, // 비밀 키
-    {
-      expiresIn: '365d', // 유효 시간은 365일
-      subject: 'userInfo',
-    });
+    return res.json(response);
+  }
 
-  res.json({
-    userInfo,
-    jwt: token,
-    ...makeSuccessResponse('로그인 성공'),
-  });
+  logger.error(`App - SignUp Query error\n: ${userInfoRows.message}`);
+  return res.status(500).send(`Error: ${result.message}`);
 };
 
 exports.snsLogin = async (req, res) => {
-  const connection = await database.singletonDBConnection.getInstance();
-  if (typeof connection !== 'object') {
-    return res.status(500).send(`Error: ${connection}`);
-  }
-
-  const { accessToken } = req.body;
+  const { body: { accessToken }, params: { snsName } } = req;
 
   const errors = validationResult(req);
 
@@ -100,8 +76,6 @@ exports.snsLogin = async (req, res) => {
     const result = errors.errors.map((error) => error.msg);
     return res.status(400).json({ success: false, errors: [...result] });
   }
-
-  const { snsName } = req.params;
 
   const authOptions = {
     url: snsInfo[snsName].url,
@@ -117,98 +91,39 @@ exports.snsLogin = async (req, res) => {
         password, nickname, email, profileImageUrl,
       } = snsInfo[snsName].getUserInfo(body);
 
-      const userInfoRows = await findUserInfoByEmail(connection, email);
+      const { isSuccess, result: findUserResult } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
 
-      if (userInfoRows.length) {
+      if (isSuccess && findUserResult.length) {
         // 이미 가입되어있음 -> 로그인 처리
-        try {
-          const userInfo = {
-            id: userInfoRows[0].id,
-            email,
-            nickname: userInfoRows[0].nickname,
-            profileImageUrl: userInfoRows[0].profileImageUrl || '',
-            introduction: userInfoRows[0].introduction || '',
-            phoneNumber: userInfoRows[0].phoneNumber || '',
-            isDeleted: userInfoRows[0].isDeleted,
-          };
+        const loginResponse = await makeLoginResponse(findUserResult[0]);
 
-          // 토큰 생성
-          const token = await jwt.sign(userInfo, // 토큰의 내용(payload)
-            secretConfig.jwtsecret, // 비밀 키
-            {
-              expiresIn: '365d', // 유효 시간은 365일
-              subject: 'userInfo',
-            });
-
-          res.json({
-            userInfo,
-            jwt: token,
-            ...makeSuccessResponse('로그인 성공'),
-          });
-          return connection.release();
-        } catch (err) {
-          logger.error(`App - SignIn Query error\n: ${JSON.stringify(err)}`);
-          connection.release();
-          return false;
-        }
-      } else {
+        return res.json(loginResponse);
+      } else if (isSuccess && findUserResult.length < 1) {
         // 첫 로그인 -> 가입 후 로그인 처리
-        try {
-          await connection.beginTransaction(); // START TRANSACTION
+        const { isSuccess, result: joinResult } = await requestTransactionQuery(queries.join.insertSNS, [email, hashedPassword, nickname, nickname, profileImageUrl, password]);
 
-          const hashedPassword = await crypto.createHash('sha512').update(String(password)).digest('hex');
+        if (isSuccess) {
+          const { insertId } = joinResult[0];
 
-          const insertUserQuery = `
-                      INSERT INTO user(email, password, name, nickname, profileImageUrl, ${snsName === 'kakao' ? 'kakaoId' : 'facebookId'})
-                      VALUES (?, ?, ?, ?, ?, ?);
-                          `;
-          const insertUserParams = [email, hashedPassword, nickname, nickname, profileImageUrl, password];
-          const result = await connection.query(insertUserQuery, insertUserParams);
+          const loginResponse = await makeLoginResponse({ userId: insertId, nickname, email, profileImageUrl, introduction: '', phoneNumber: '', isDeleted: 'N', });
 
-          const { insertId } = result[0];
-
-          await connection.commit(); // COMMIT
-
-          const userInfo = {
-            id: insertId,
-            email,
-            nickname,
-            profileImageUrl,
-            introduction: '',
-            phoneNumber: '',
-            isDeleted: 'N',
-          };
-
-          const token = await jwt.sign(userInfo, // 토큰의 내용(payload)
-            secretConfig.jwtsecret, // 비밀 키
-            {
-              expiresIn: '365d', // 유효 시간은 365일
-              subject: 'userInfo',
-            });
-
-          res.json({
-            userInfo,
-            jwt: token,
-            ...makeSuccessResponse('회원가입 및 로그인 성공'),
-          });
-
-          connection.release();
-        } catch (err) {
-          await connection.rollback(); // ROLLBACK
-          connection.release();
-          logger.error(`App - SignUp Query error\n: ${err}`);
-          return res.status(500).send(`Error: ${err.message}`);
+          return res.json(loginResponse);
         }
+
+        logger.error(`App - SignUp Query error\n: ${result}`);
+        return res.status(500).send(`Error: ${joinResult.message}`);
       }
+      
+      logger.error(`App - SignUp Query error\n: ${result.message}`);
+      return res.status(500).send(`Error: ${findUserResult.message}`);
     } else {
-      res.json(snsInfo[snsName].errorCode);
+      return res.json(snsInfo[snsName].errorCode);
     }
-    return {};
   });
 };
 
 exports.getUserPage = async (req, res) => {
-  const connection = await database.singletonDBConnection.getInstance();
+  const connection = await singletonDBConnection.getInstance();
   if (typeof connection !== 'object') {
     return res.status(500).send(`Error: ${connection}`);
   }
@@ -230,7 +145,7 @@ exports.getUserPage = async (req, res) => {
     const everydayRecords = await requestQueryResult(connection, queries.mypage.everydayRecord, [userId]);
     const todayChallenges = await requestQueryResult(connection, queries.mypage.todayChallenge, [userId]);
 
-    const ex = await database.requestNonTransactionQuery(queries.mypage.user, [userId]);
+    const ex = await requestNonTransactionQuery(queries.mypage.user, [userId]);
 
     console.log(ex);
 
@@ -266,30 +181,30 @@ exports.update = {
       return res.status(400).json({ success: false, errors: [...result] });
     }
 
-    const result = await database.requestTransactionQuery(queries.update.user.nickname, [nickname, userId]);
+    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.nickname, [nickname, userId]);
 
-    if (result) {
+    if (isSuccess) {
       return res.json({
         ...makeSuccessResponse('닉네임 수정 성공'),
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${err.message}`);
-    return res.status(500).send(`Error: ${err.message}`);
+    logger.error(`App - SignUp Query error\n: ${result.message}`);
+    return res.status(500).send(`Error: ${result.message}`);
   },
   introduction: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { introduction } } = req;
 
-    const result = await database.requestTransactionQuery(queries.update.user.introduction, [introduction, userId]);
+    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.introduction, [introduction, userId]);
 
-    if (result) {
+    if (isSuccess) {
       return res.json({
         ...makeSuccessResponse('소개 수정 성공'),
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${err.message}`);
-    return res.status(500).send(`Error: ${err.message}`);
+    logger.error(`App - SignUp Query error\n: ${result.message}`);
+    return res.status(500).send(`Error: ${result.message}`);
   },
   profileImageUrl: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { profileImageUrl } } = req;
@@ -301,16 +216,16 @@ exports.update = {
       return res.status(400).json({ success: false, errors: [...result] });
     }
 
-    const result = await database.requestTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
+    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
 
-    if (result) {
+    if (isSuccess) {
       return res.json({
         ...makeSuccessResponse('프로필 이미지 수정 성공'),
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${err.message}`);
-    return res.status(500).send(`Error: ${err.message}`);
+    logger.error(`App - SignUp Query error\n: ${result.message}`);
+    return res.status(500).send(`Error: ${result.message}`);
   },
   password: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { password } } = req;
@@ -324,30 +239,30 @@ exports.update = {
 
     const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
 
-    const result = await database.requestTransactionQuery(queries.update.user.password, [hashedPassword, userId]);
- 
-    if (result) {
+    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.password, [hashedPassword, userId]);
+
+    if (isSuccess) {
       return res.json({
         ...makeSuccessResponse('비밀번호 수정 성공'),
       });
     }
 
-    logger.error(`App - SignUp Query error\n: ${err.message}`);
-    return res.status(500).send(`Error: ${err.message}`);
+    logger.error(`App - SignUp Query error\n: ${result.message}`);
+    return res.status(500).send(`Error: ${result.message}`);
   },
 };
 
 exports.delete = async (req, res) => {
   const { verifiedToken: { id: userId } } = req;
 
-  const result = await database.requestTransactionQuery(queries.delete.user, ['Y', userId]);
+  const { isSuccess, result } = await requestTransactionQuery(queries.delete.user, ['Y', userId]);
 
-  if (result) {
+  if (isSuccess) {
     return res.json({
       ...makeSuccessResponse('탈퇴 성공'),
     });
   }
 
-  logger.error(`App - SignUp Query error\n: ${err.message}`);
-  return res.status(500).send(`Error: ${err.message}`);
+  logger.error(`App - SignUp Query error\n: ${result.message}`);
+  return res.status(500).send(`Error: ${result.message}`);
 };

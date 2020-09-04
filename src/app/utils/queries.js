@@ -13,7 +13,11 @@ module.exports = {
     insert: `
       INSERT INTO user(email, password, name, nickname)
       VALUES (?, ?, ?, ?);
-    `
+    `,
+    insertSNS: (snsName) => `
+      INSERT INTO user(email, password, name, nickname, profileImageUrl, ${snsName === 'kakao' ? 'kakaoId' : 'facebookId'})
+      VALUES (?, ?, ?, ?, ?, ?);
+    `,
   },
   login: {
     findUserInfoByEmail: `

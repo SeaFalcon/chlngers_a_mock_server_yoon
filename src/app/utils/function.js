@@ -1,13 +1,23 @@
+const { validationResult } = require('express-validator');
+
+const jwt = require('jsonwebtoken');
+
+const { jwtsecret } = require('../../../config/secret');
+
+function makeSuccessResponse(message) {
+  return {
+    isSuccess: true,
+    code: 200,
+    message
+  };
+}
+
 module.exports = {
   requestQueryResult: async (connection, query, ...params) => {
     const [result] = await connection.query(query, params);
     return result;
   },
-  makeSuccessResponse: (message) => ({
-    isSuccess:true,
-    code:200,
-    message
-  }),
+  makeSuccessResponse,
   snsInfo: {
     facebook: {
       url: 'https://graph.facebook.com/v8.0/me?fields=id,name,email,picture.type(large){url}',
@@ -36,5 +46,37 @@ module.exports = {
       }),
       errorCode: { code: 314, message: 'AccessToken not valid, naver Login Failed.' },
     },
+  },
+  getValidationResult: (req) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      const result = errors.errors.map((error) => error.msg);
+      return res.status(400).json({ success: false, errors: [...result] });
+    }
+
+    return true;
+  },
+  makeLoginResponse: async ({ userId, email, nickname, profileImageUrl, phoneNumber, isDeleted, introduction }) => {
+    const userInfo = {
+      id: userId,
+      email,
+      nickname,
+      profileImageUrl: profileImageUrl || '',
+      introduction: introduction || '',
+      phoneNumber: phoneNumber || '',
+      isDeleted,
+    };
+
+    // 토큰 생성
+    const token = await jwt.sign(userInfo, // 토큰의 내용(payload)
+      jwtsecret, // 비밀 키
+      {
+        expiresIn: '365d', // 유효 시간은 365일
+        subject: 'userInfo',
+      });
+
+    const result = { userInfo, jwt: token, ...makeSuccessResponse('로그인 성공') }
+    return result;
   }
 };
