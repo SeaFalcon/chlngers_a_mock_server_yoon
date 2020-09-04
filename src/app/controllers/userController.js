@@ -310,11 +310,6 @@ exports.update = {
     return res.status(500).send(`Error: ${err.message}`);
   },
   profileImageUrl: async (req, res) => {
-    const connection = await database.singletonDBConnection.getInstance();
-    if (typeof connection !== 'object') {
-      return res.status(500).send(`Error: ${connection}`);
-    }
-
     const { verifiedToken: { id: userId }, body: { profileImageUrl } } = req;
 
     const errors = validationResult(req);
@@ -324,28 +319,16 @@ exports.update = {
       return res.status(400).json({ success: false, errors: [...result] });
     }
 
-    try {
-      await connection.beginTransaction(); // START TRANSACTION
+    const result = await database.requestTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
 
-      const updateProfileImageUrlQuery = `
-                    UPDATE user
-                    SET profileImageUrl=?
-                    WHERE userId=?;
-                        `;
-      const updateProfileImageUrlParams = [profileImageUrl, userId];
-      await connection.query(updateProfileImageUrlQuery, updateProfileImageUrlParams);
-
-      await connection.commit(); // COMMIT
-      connection.release();
+    if (result) {
       return res.json({
         ...makeSuccessResponse('프로필 이미지 수정 성공'),
       });
-    } catch (err) {
-      await connection.rollback(); // ROLLBACK
-      connection.release();
-      logger.error(`App - SignUp Query error\n: ${err.message}`);
-      return res.status(500).send(`Error: ${err.message}`);
     }
+
+    logger.error(`App - SignUp Query error\n: ${err.message}`);
+    return res.status(500).send(`Error: ${err.message}`);
   },
   password: async (req, res) => {
     const connection = await database.singletonDBConnection.getInstance();
