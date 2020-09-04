@@ -296,35 +296,18 @@ exports.update = {
     return res.status(500).send(`Error: ${err.message}`);
   },
   introduction: async (req, res) => {
-    const connection = await database.singletonDBConnection.getInstance();
-    if (typeof connection !== 'object') {
-      return res.status(500).send(`Error: ${connection}`);
-    }
-
     const { verifiedToken: { id: userId }, body: { introduction } } = req;
 
-    try {
-      await connection.beginTransaction(); // START TRANSACTION
+    const result = await database.requestTransactionQuery(queries.update.user.introduction, [introduction, userId]);
 
-      const updateIntroductionQuery = `
-                    UPDATE user
-                    SET introduction=?
-                    WHERE userId=?;
-                        `;
-      const updateIntroductionParams = [introduction, userId];
-      await connection.query(updateIntroductionQuery, updateIntroductionParams);
-
-      await connection.commit(); // COMMIT
-      connection.release();
+    if (result) {
       return res.json({
         ...makeSuccessResponse('소개 수정 성공'),
       });
-    } catch (err) {
-      await connection.rollback(); // ROLLBACK
-      connection.release();
-      logger.error(`App - SignUp Query error\n: ${err.message}`);
-      return res.status(500).send(`Error: ${err.message}`);
     }
+
+    logger.error(`App - SignUp Query error\n: ${err.message}`);
+    return res.status(500).send(`Error: ${err.message}`);
   },
   profileImageUrl: async (req, res) => {
     const connection = await database.singletonDBConnection.getInstance();
