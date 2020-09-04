@@ -424,67 +424,16 @@ exports.update = {
 };
 
 exports.delete = async (req, res) => {
-  const connection = await database.singletonDBConnection.getInstance();
-  if (typeof connection !== 'object') {
-    return res.status(500).send(`Error: ${connection}`);
-  }
-
   const { verifiedToken: { id: userId } } = req;
 
-  try {
-    await connection.beginTransaction(); // START TRANSACTION
+  const result = await database.requestTransactionQuery(queries.delete.user, ['Y', userId]);
 
-    const deleteUserQuery = `
-                    UPDATE user
-                    SET isDeleted=?
-                    WHERE userId=?;
-                        `;
-
-    const deleteUserParams = ['Y', userId];
-    await connection.query(deleteUserQuery, deleteUserParams);
-
-    await connection.commit(); // COMMIT
-    connection.release();
+  if (result) {
     return res.json({
       ...makeSuccessResponse('탈퇴 성공'),
     });
-  } catch (err) {
-    await connection.rollback(); // ROLLBACK
-    connection.release();
-    logger.error(`App - SignUp Query error\n: ${err.message}`);
-    return res.status(500).send(`Error: ${err.message}`);
-  }
-};
-
-exports.delete2 = async (req, res) => {
-  const connection = await database.singletonDBConnection.getInstance();
-  if (typeof connection !== 'object') {
-    return res.status(500).send(`Error: ${connection}`);
   }
 
-  const { verifiedToken: { id: userId } } = req;
-
-  try {
-    await connection.beginTransaction(); // START TRANSACTION
-
-    const deleteUserQuery = `
-                    UPDATE user
-                    SET isDeleted=?
-                    WHERE userId=?;
-                        `;
-
-    const deleteUserParams = ['Y', userId];
-    await connection.query(deleteUserQuery, deleteUserParams);
-
-    await connection.commit(); // COMMIT
-    connection.release();
-    return res.json({
-      ...makeSuccessResponse('탈퇴 성공'),
-    });
-  } catch (err) {
-    await connection.rollback(); // ROLLBACK
-    connection.release();
-    logger.error(`App - SignUp Query error\n: ${err.message}`);
-    return res.status(500).send(`Error: ${err.message}`);
-  }
+  logger.error(`App - SignUp Query error\n: ${err.message}`);
+  return res.status(500).send(`Error: ${err.message}`);
 };
