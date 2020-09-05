@@ -12,7 +12,7 @@ module.exports = (app) => {
     '/user',
     userValidation.checkInput,
     userValidation.checkEmailDuplicate,
-    userValidation.checkNicknameDuplicate,
+    // userValidation.checkNicknameDuplicate,
     user.join,
   );
 
@@ -45,7 +45,7 @@ module.exports = (app) => {
   app.patch(
     '/user/nickname',
     jwtMiddleware,
-    userValidation.checkNicknameDuplicate,
+    // userValidation.checkNicknameDuplicate,
     user.update.nickname,
   );
   app.patch(

@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "port=4444 nodemon index.js",
     "prod": "port=3333 nodemon index.js",
-    "devForever": "forever start index.js&set port=4444",
-    "prodForever": "forever start index.js&set port=3333"
+    "devForever": "port=4444 forever start index.js",
+    "prodForever": "port=3333 forever start index.js"
   },
   "repository": {
     "type": "git",

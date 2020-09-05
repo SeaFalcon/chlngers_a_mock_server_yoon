@@ -67,9 +67,11 @@ module.exports = {
           U.profileImageUrl,
           U.introduction,
           G.gradeId,
-          G.gradeName
+          G.gradeName,
+          SUM(R.amount) as reward
       FROM user U
             JOIN grade G ON U.experience >= G.experienceCriteriaMin AND U.experience <= G.experienceCriteriaMax
+            JOIN reward R ON U.userId = R.userId and R.type = 'A'
       WHERE U.userId = ?;
     `,
     follower: `
@@ -101,5 +103,9 @@ module.exports = {
       GROUP BY certificationId, photoUrl, C.startDay, C.endDay;
     `,
   },
-
+  search: {
+    all: `
+      SELECT * FROM challenge;
+    `
+  },
 };
