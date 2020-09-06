@@ -8,7 +8,7 @@ function makeSuccessResponse(message) {
   return {
     isSuccess: true,
     code: 200,
-    message
+    message,
   };
 }
 
@@ -53,7 +53,9 @@ module.exports = {
 
     return { success: true };
   },
-  makeLoginResponse: async ({ userId, email, nickname, profileImageUrl, phoneNumber, isDeleted, introduction }) => {
+  makeLoginResponse: async ({
+    userId, email, nickname, profileImageUrl, phoneNumber, isDeleted, introduction,
+  }) => {
     const userInfo = {
       id: userId,
       email,
@@ -72,14 +74,15 @@ module.exports = {
         subject: 'userInfo',
       });
 
-    const result = { userInfo, jwt: token, ...makeSuccessResponse('로그인 성공') }
+    const result = { userInfo, jwt: token, ...makeSuccessResponse('로그인 성공') };
     return result;
   },
   shuffleArray: (array) => {
-    array.forEach((item, i, arr) => {
+    const sortedArray = array;
+    sortedArray.forEach((item, i) => {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    })
-    return array;
-  }
+      [sortedArray[i], sortedArray[j]] = [sortedArray[j], sortedArray[i]];
+    });
+    return sortedArray;
+  },
 };

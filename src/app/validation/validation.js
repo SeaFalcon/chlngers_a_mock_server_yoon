@@ -72,7 +72,7 @@ module.exports = {
     }),
     checkUser: body('email')
       .custom(async (email, { req: { body: postData } }) => {
-        const {result: user} = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
+        const { result: user } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
 
         // check email
         if (user.length < 1) {

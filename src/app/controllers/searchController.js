@@ -1,29 +1,31 @@
-const { requestTransactionQuery, requestNonTransactionQuery } = require('../../../config/database');
-
-const { makeSuccessResponse, snsInfo, makeLoginResponse, getValidationResult } = require('../utils/function');
+const { requestNonTransactionQuery } = require('../../../config/database');
 
 const queries = require('../utils/queries');
 
-const { shuffleArray } = require('../utils/function');
+const { shuffleArray, makeSuccessResponse } = require('../utils/function');
 
 exports.getChallenges = async (req, res) => {
   const { verifiedToken: { id } } = req;
 
-  const { search: { getChallenges, random, limit, subject } } = queries;
+  const {
+    search: {
+      getChallenges, subject: getSubjects, // random, limit,
+    },
+  } = queries;
 
   // const { isSuccess: recommendSuccess, result: recommends } = await requestNonTransactionQuery(getChallenges + random + limit, [id, 0, 6]);
-  const { isSuccess: subjectSuccess, result: subjects } = await requestNonTransactionQuery(subject);
+  const { isSuccess: subjectSuccess, result: subjects } = await requestNonTransactionQuery(getSubjects);
   const { isSuccess: allChallengeSuccess, result: allChallenges } = await requestNonTransactionQuery(getChallenges, [id]);
   // const { isSuccess: popularSuccess, result: populars } = await requestNonTransactionQuery(getChallenges + random + limit, [id, 0, 9]);
 
   const recommendResult = {
-    subject: 'recommend',
+    subject: '추천',
     challenges: shuffleArray([...allChallenges]).slice(0, 6),
-  }
+  };
 
   const subjectResult = subjects.map((subject) => ({
     subject: subject.subjectName,
-    challenges: allChallenges.filter((challenge) => challenge.subjectName === subject.subjectName)
+    challenges: allChallenges.filter((challenge) => challenge.subjectName === subject.subjectName),
   }));
 
   const challenges = {
@@ -36,7 +38,7 @@ exports.getChallenges = async (req, res) => {
           '20s': shuffleArray([...allChallenges]).slice(0, 9),
           '30s': shuffleArray([...allChallenges]).slice(0, 9),
           '40s': shuffleArray([...allChallenges]).slice(0, 9),
-        }
+        },
       },
       {
         gender: 'woman',
@@ -45,12 +47,12 @@ exports.getChallenges = async (req, res) => {
           '20s': shuffleArray([...allChallenges]).slice(0, 9),
           '30s': shuffleArray([...allChallenges]).slice(0, 9),
           '40s': shuffleArray([...allChallenges]).slice(0, 9),
-        }
-      }
-    ]
-  }
+        },
+      },
+    ],
+  };
 
-  if (subjectSuccess && allChallengeSuccess) return res.json(challenges);
+  if (subjectSuccess && allChallengeSuccess) return res.json({ ...challenges, ...makeSuccessResponse('탐색페이지 조회 성공') });
 
   if (!subjectSuccess) return res.status(500).send(`Error: ${subjects.message}`);
   if (!allChallengeSuccess) return res.status(500).send(`Error: ${allChallenges.message}`);

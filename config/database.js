@@ -6,6 +6,28 @@ const { mysqlConfig } = require('./secret');
 
 const pool = mysql.createPool(mysqlConfig);
 
+const singletonDBConnection = (function getSingletonDBConnection() {
+  let instance;
+  async function init() {
+    try {
+      // throw new Error('db connection error!!');
+      const connection = await pool.getConnection(async (conn) => conn);
+      return connection;
+    } catch (err) {
+      logger.error(`App - SignUp DB Connection error\n: ${err.message}`);
+      return err.message;
+    }
+  }
+  return {
+    async getInstance() {
+      if (!instance) {
+        instance = await init();
+      }
+      return instance;
+    },
+  };
+}());
+
 const requestNonTransactionQuery = async (sql, params) => {
   try {
     const connection = await singletonDBConnection.getInstance();
@@ -46,28 +68,6 @@ const requestTransactionQuery = async (sql, params) => {
     return { isSuccess: false, result: err };
   }
 };
-
-const singletonDBConnection = (function getSingletonDBConnection() {
-  let instance;
-  async function init() {
-    try {
-      // throw new Error('db connection error!!');
-      const connection = await pool.getConnection(async (conn) => conn);
-      return connection;
-    } catch (err) {
-      logger.error(`App - SignUp DB Connection error\n: ${err.message}`);
-      return err.message;
-    }
-  }
-  return {
-    async getInstance() {
-      if (!instance) {
-        instance = await init();
-      }
-      return instance;
-    },
-  };
-}());
 
 module.exports = {
   pool,

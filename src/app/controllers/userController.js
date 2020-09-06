@@ -4,7 +4,9 @@ const request = require('request');
 
 const { requestTransactionQuery, requestNonTransactionQuery } = require('../../../config/database');
 
-const { makeSuccessResponse, snsInfo, makeLoginResponse, getValidationResult } = require('../utils/function');
+const {
+  makeSuccessResponse, snsInfo, makeLoginResponse, getValidationResult,
+} = require('../utils/function');
 
 const queries = require('../utils/queries');
 
@@ -16,32 +18,34 @@ exports.check = async (req, res) => {
 };
 
 exports.join = async (req, res) => {
-  const { name, email, password, nickname } = req.body;
+  const {
+    name, email, password, nickname,
+  } = req.body;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
 
-  const result = await requestTransactionQuery(queries.join.insert, [email, hashedPassword, name, nickname]);
+  const { isSuccess, result } = await requestTransactionQuery(queries.join.insert, [email, hashedPassword, name, nickname]);
 
-  if (result) {
+  if (isSuccess) {
     return res.json({
       ...makeSuccessResponse('회원가입 성공 성공'),
     });
   }
 
-  return res.status(500).send(`Error: ${err.message}`);
+  return res.status(500).send(`Error: ${result.message}`);
 };
 
 exports.login = async (req, res) => {
   const { email } = req.body;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { isSuccess, result } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
@@ -58,9 +62,9 @@ exports.login = async (req, res) => {
 exports.snsLogin = async (req, res) => {
   const { body: { accessToken }, params: { snsName } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const authOptions = {
@@ -77,21 +81,26 @@ exports.snsLogin = async (req, res) => {
         password, nickname, email, profileImageUrl,
       } = snsInfo[snsName].getUserInfo(body);
 
-      const { isSuccess, result: findUserResult } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
+      const { isSuccess: findUserSuccess, result: findUserResult } = await requestNonTransactionQuery(queries.login.findUserInfoByEmail, [email]);
 
-      if (isSuccess && findUserResult.length) {
+      if (findUserSuccess && findUserResult.length) {
         // 이미 가입되어있음 -> 로그인 처리
         const loginResponse = await makeLoginResponse(findUserResult[0]);
 
         return res.json(loginResponse);
-      } else if (isSuccess && findUserResult.length < 1) {
+      } if (findUserSuccess && findUserResult.length < 1) {
         // 첫 로그인 -> 가입 후 로그인 처리
-        const { isSuccess, result: joinResult } = await requestTransactionQuery(queries.join.insertSNS, [email, hashedPassword, nickname, nickname, profileImageUrl, password]);
 
-        if (isSuccess) {
+        const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
+
+        const { isSuccess: joinSuccess, result: joinResult } = await requestTransactionQuery(queries.join.insertSNS, [email, hashedPassword, nickname, nickname, profileImageUrl, password]);
+
+        if (joinSuccess) {
           const { insertId } = joinResult[0];
 
-          const loginResponse = await makeLoginResponse({ userId: insertId, nickname, email, profileImageUrl, introduction: '', phoneNumber: '', isDeleted: 'N', });
+          const loginResponse = await makeLoginResponse({
+            userId: insertId, nickname, email, profileImageUrl, introduction: '', phoneNumber: '', isDeleted: 'N',
+          });
 
           return res.json(loginResponse);
         }
@@ -100,18 +109,17 @@ exports.snsLogin = async (req, res) => {
       }
 
       return res.status(500).send(`Error: ${findUserResult.message}`);
-    } else {
-      return res.json(snsInfo[snsName].errorCode);
     }
+    return res.json(snsInfo[snsName].errorCode);
   });
 };
 
 exports.getUserPage = async (req, res) => {
-  const { params: { id: userId }, verifiedToken } = req;
+  const { params: { id: userId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { isSuccess: userInfoRowsSuccess, result: userInfoRows } = await requestNonTransactionQuery(queries.mypage.user, [userId]);
@@ -137,16 +145,16 @@ exports.getUserPage = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: 마이페이지 조회 실패`);
+  return res.status(500).send('Error: 마이페이지 조회 실패');
 };
 
 exports.update = {
   nickname: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { nickname } } = req;
 
-    const errors = getValidationResult(req)
+    const errors = getValidationResult(req);
     if (!errors.success) {
-      return res.status(400).json(errors)
+      return res.status(400).json(errors);
     }
 
     const { isSuccess, result } = await requestTransactionQuery(queries.update.user.nickname, [nickname, userId]);
@@ -175,9 +183,9 @@ exports.update = {
   profileImageUrl: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { profileImageUrl } } = req;
 
-    const errors = getValidationResult(req)
+    const errors = getValidationResult(req);
     if (!errors.success) {
-      return res.status(400).json(errors)
+      return res.status(400).json(errors);
     }
 
     const { isSuccess, result } = await requestTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
@@ -193,9 +201,9 @@ exports.update = {
   password: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { password } } = req;
 
-    const errors = getValidationResult(req)
+    const errors = getValidationResult(req);
     if (!errors.success) {
-      return res.status(400).json(errors)
+      return res.status(400).json(errors);
     }
 
     const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');

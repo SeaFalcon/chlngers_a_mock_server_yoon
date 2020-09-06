@@ -51,7 +51,7 @@ module.exports = {
         SET password=?
         WHERE userId=?;
       `,
-    }
+    },
   },
   delete: {
     user: `
@@ -142,6 +142,6 @@ module.exports = {
     `,
     random: '\nORDER BY RAND()',
     limit: '\nLIMIT ?, ?',
-    subject: 'SELECT * FROM subject;'
+    subject: 'SELECT * FROM subject;',
   },
 };
