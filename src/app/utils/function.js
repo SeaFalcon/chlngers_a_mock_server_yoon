@@ -74,5 +74,12 @@ module.exports = {
 
     const result = { userInfo, jwt: token, ...makeSuccessResponse('로그인 성공') }
     return result;
+  },
+  shuffleArray: (array) => {
+    array.forEach((item, i, arr) => {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    })
+    return array;
   }
 };

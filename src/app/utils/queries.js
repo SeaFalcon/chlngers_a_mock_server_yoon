@@ -71,7 +71,7 @@ module.exports = {
           SUM(R.amount) as reward
       FROM user U
             JOIN grade G ON U.experience >= G.experienceCriteriaMin AND U.experience <= G.experienceCriteriaMax
-            JOIN reward R ON U.userId = R.userId and R.type = 'A'
+            LEFT JOIN reward R ON U.userId = R.userId and R.type = 'A'
       WHERE U.userId = ?;
     `,
     follower: `
@@ -104,8 +104,44 @@ module.exports = {
     `,
   },
   search: {
-    all: `
-      SELECT * FROM challenge;
-    `
+    getChallenges: `
+     SELECT C.challengeId,
+            title,
+            CONCAT(CONCAT(DATE_FORMAT(startDay, '%m/%d/'), CASE DAYOFWEEK(startDay)
+                                                              WHEN '1' THEN '일'
+                                                              WHEN '2' THEN '월'
+                                                              WHEN '3' THEN '화'
+                                                              WHEN '4' THEN '수'
+                                                              WHEN '5' THEN '목'
+                                                              WHEN '6' THEN '금'
+                                                              WHEN '7' THEN '토'
+                END
+                      ), CONCAT(DATE_FORMAT(endDay, ' - %m/%d/'), CASE DAYOFWEEK(endDay)
+                                                                      WHEN '1' THEN '일'
+                                                                      WHEN '2' THEN '월'
+                                                                      WHEN '3' THEN '화'
+                                                                      WHEN '4' THEN '수'
+                                                                      WHEN '5' THEN '목'
+                                                                      WHEN '6' THEN '금'
+                                                                      WHEN '7' THEN '토'
+                END))                          as period,
+            CONCAT(week, '주')                  as week,
+            F.viewName,
+            IF(IC.userId = ?, 'true', 'false')         as interest,
+            IFNULL(ROUND(AVG(CR.score), 2), 0) as score,
+            COUNT(CP.userId) as participationCount,
+            S.subjectName,
+            ImageUrl
+        FROM challenge C
+              JOIN frequency F ON C.frequencyId = F.frequencyId
+              LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
+              LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
+              LEFT JOIN challengeparticipant CP on C.challengeId = CP.challengeId
+              JOIN subject S ON C.subjectId = S.subjectId
+        GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl
+    `,
+    random: '\nORDER BY RAND()',
+    limit: '\nLIMIT ?, ?',
+    subject: 'SELECT * FROM subject;'
   },
 };
