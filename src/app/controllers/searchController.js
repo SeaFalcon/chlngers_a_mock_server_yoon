@@ -66,7 +66,7 @@ exports.getChallengeDetail = async (req, res) => {
 
   const errors = getValidationResult(req)
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { search: { challengeDetail: { get, certifications, impossible, reviews } } } = queries;
@@ -97,7 +97,7 @@ exports.participateChallenge = async (req, res) => {
 
   const errors = getValidationResult(req)
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { challenge: { participate } } = queries;
@@ -118,7 +118,7 @@ exports.getPossibleCertification = async (req, res) => {
 
   const errors = getValidationResult(req)
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { challenge: { possibleCertification } } = queries;
@@ -140,7 +140,7 @@ exports.certificateChallenge = async (req, res) => {
 
   const errors = getValidationResult(req)
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { challenge: { certificate } } = queries;
@@ -161,7 +161,7 @@ exports.getChallengesBySubject = async (req, res) => {
 
   const errors = getValidationResult(req)
   if (!errors.success) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const { challenge: { challengeBySubjectId } } = queries;
@@ -177,3 +177,126 @@ exports.getChallengesBySubject = async (req, res) => {
 
   return res.status(500).send(`Error: ${challengeBySubjectResult.message}`);
 };
+
+exports.getInterestChallenges = async (req, res) => {
+  const { verifiedToken: { id } } = req;
+
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { user: { interestChallenge: { get } } } = queries;
+
+  const { isSuccess: interestChallengeSuccess, result: interestChallengeResult } = await requestNonTransactionQuery(get, [id]);
+
+  if (interestChallengeSuccess) {
+    return res.json({
+      interestChallengeResult,
+      ...makeSuccessResponse('관심 챌린지 조회 성공')
+    })
+  }
+
+  return res.status(500).send(`Error: ${interestChallengeResult.message}`);
+}
+exports.addInterestChallenge = async (req, res) => {
+  const { verifiedToken: { id }, params: { challengeId } } = req;
+
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { user: { interestChallenge: { add } } } = queries;
+
+  const { isSuccess, result } = await requestNonTransactionQuery(add, [id, challengeId]);
+
+  if (isSuccess) {
+    return res.json({
+      ...makeSuccessResponse('관심 챌린지 추가 성공')
+    })
+  }
+
+  return res.status(500).send(`Error: ${result.message}`);
+}
+exports.deleteInterestChallenges = async (req, res) => {
+  const { verifiedToken: { id }, params: { challengeId } } = req;
+
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { user: { interestChallenge: { delete: remove } } } = queries;
+
+  const { isSuccess, result } = await requestNonTransactionQuery(remove, [id, challengeId]);
+
+  if (isSuccess) {
+    return res.json({
+      ...makeSuccessResponse('관심 챌린지 제거 성공')
+    })
+  }
+
+  return res.status(500).send(`Error: ${result.message}`);
+}
+exports.getInterestTags = async (req, res) => {
+  const { verifiedToken: { id } } = req;
+
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { user: { interestField: { get } } } = queries;
+
+  const { isSuccess: interestTagSuccess, result: interestTagResult } = await requestNonTransactionQuery(get, [id]);
+
+  if (interestTagSuccess) {
+    return res.json({
+      interestTagResult,
+      ...makeSuccessResponse('관심분야 리스트 조회 성공')
+    })
+  }
+
+  return res.status(500).send(`Error: ${interestTagResult.message}`);
+}
+exports.addInterestTag = async (req, res) => {
+  const { verifiedToken: { id }, params: { tagId } } = req;
+
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { user: { interestField: { add } } } = queries;
+
+  const { isSuccess, result } = await requestNonTransactionQuery(add, [id, tagId]);
+
+  if (isSuccess) {
+    return res.json({
+      ...makeSuccessResponse('관심분야 팔로우 성공')
+    })
+  }
+
+  return res.status(500).send(`Error: ${result.message}`);
+}
+exports.deleteInterestTag = async (req, res) => {
+  const { verifiedToken: { id }, params: { tagId } } = req;
+
+  const errors = getValidationResult(req)
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { user: { interestField: { delete: remove } } } = queries;
+
+  const { isSuccess, result } = await requestNonTransactionQuery(remove, [id, tagId]);
+
+  if (isSuccess) {
+    return res.json({
+      ...makeSuccessResponse('관심분야 언팔로우 성공')
+    })
+  }
+
+  return res.status(500).send(`Error: ${result.message}`);
+}

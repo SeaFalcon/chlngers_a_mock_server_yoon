@@ -47,14 +47,45 @@ module.exports = (app) => {
     search.getChallengesBySubject
   )
 
-  // // 관심 챌린지
-  // app.get('/user/interest')
-  // app.post('/')
-  // app.delete('/')
+  // 관심 챌린지
+  app.get(
+    '/user/interest-challenges',
+    jwtMiddleware,
+    search.getInterestChallenges
+  )
+  app.post(
+    '/user/interest-challenge/:challengeId',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.userValidation.interestChallenge.exist,
+    search.addInterestChallenge
+  )
+  app.delete(
+    '/user/interest-challenge/:challengeId',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.userValidation.interestChallenge.notExist,
+    search.deleteInterestChallenges
+  )
 
-  // // 관심 분야
-  // app.get('/')
-  // app.post('/')
-  // app.delete('/')
-
+  // 관심 분야
+  app.get(
+    '/user/interest-tags',
+    jwtMiddleware,
+    search.getInterestTags
+  )
+  app.post(
+    '/user/interest-tag/:tagId',
+    jwtMiddleware,
+    validation.userValidation.interestField.checkId,
+    validation.userValidation.interestField.exist,
+    search.addInterestTag
+  )
+  app.delete(
+    '/user/interest-tag/:tagId',
+    jwtMiddleware,
+    validation.userValidation.interestField.checkId,
+    validation.userValidation.interestField.notExist,
+    search.deleteInterestTag
+  )
 };

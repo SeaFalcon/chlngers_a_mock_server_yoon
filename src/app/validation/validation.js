@@ -62,6 +62,50 @@ module.exports = {
       }
       return {};
     }),
+    interestField: {
+      checkId: param('tagId').custom(async (tagId) => {
+        const { result: hashtag } = await requestNonTransactionQuery(queries.challenge.isExistHashTag, [tagId]);
+
+        if (hashtag.length < 1) {
+          return Promise.reject({ code: 320, message: 'tagId is not exist' });
+        }
+        return {};
+      }),
+      exist: param('tagId').custom(async (tagId, { req: { verifiedToken: { id } } }) => {
+        const { result: interestTag } = await requestNonTransactionQuery(queries.user.isExistInterestTag, [id, tagId]);
+
+        if (interestTag.length) {
+          return Promise.reject({ code: 321, message: 'already interest field is added' });
+        }
+        return {};
+      }),
+      notExist: param('tagId').custom(async (tagId, { req: { verifiedToken: { id } } }) => {
+        const { result: interestTag } = await requestNonTransactionQuery(queries.user.isExistInterestTag, [id, tagId]);
+
+        if (interestTag.length < 1) {
+          return Promise.reject({ code: 322, message: 'already interest field is removed' });
+        }
+        return {};
+      }),
+    },
+    interestChallenge: {
+      exist: param('challengeId').custom(async (challengeId, { req: { verifiedToken: { id } } }) => {
+        const { result: challenge } = await requestNonTransactionQuery(queries.user.isExistInterestChallenge, [id, challengeId]);
+
+        if (challenge.length) {
+          return Promise.reject({ code: 323, message: 'already interest challenge is added' });
+        }
+        return {};
+      }),
+      notExist: param('challengeId').custom(async (challengeId, { req: { verifiedToken: { id } } }) => {
+        const { result: challenge } = await requestNonTransactionQuery(queries.user.isExistInterestChallenge, [id, challengeId]);
+
+        if (challenge.length < 1) {
+          return Promise.reject({ code: 324, message: 'already interest challenge is removed' });
+        }
+        return {};
+      }),
+    },
   },
   loginValidation: {
     checkInput: checkSchema({
@@ -151,8 +195,8 @@ module.exports = {
     participate: body('money')
       .notEmpty()
       .withMessage({ code: 318, message: 'money value is empty' }),
-    },
-    certificate: body('photoUrl')
-      .isURL()
-      .withMessage({ code: 319, message: 'photoUrl is not Valid' }),
+  },
+  certificate: body('photoUrl')
+    .isURL()
+    .withMessage({ code: 319, message: 'photoUrl is not Valid' }),
 };

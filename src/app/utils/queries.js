@@ -262,9 +262,11 @@ module.exports = {
   },
   user: {
     isExistUser: `SELECT userId FROM user WHERE userId=?`,
+    isExistInterestTag: `SELECT tagId FROM interesttag WHERE userId=? AND tagId=?`,
+    isExistInterestChallenge: `SELECT challengeId FROM interestedchallenge WHERE userId=? AND challengeId=?`,
     interestField: {
       get: `
-        SELECT HT.tagId, HT.tagName, COUNT(CT.challengeId) as challengeCount, IFNULL(IT.userId, false) as isFollowed
+        SELECT HT.tagId, HT.tagName, COUNT(CT.challengeId) as challengeCount, IFNULL(IT.userId, false) as isFollow
         FROM hashtag HT
                 JOIN challengetag CT on HT.tagId = CT.tagId
                 LEFT JOIN interesttag IT ON HT.tagid = IT.tagId AND IT.userId = ?
@@ -272,17 +274,52 @@ module.exports = {
         ORDER BY HT.tagId;
       `,
       add: 'INSERT INTO interesttag (userId, tagId) VALUES (?, ?);',
-      delete: 'DELETE FROM interesttag WHERE userId = ?, tagId = ?;',
-    }
+      delete: 'DELETE FROM interesttag WHERE userId = ? AND tagId = ?;',
+    },
+    interestChallenge: {
+      get: `
+       SELECT C.challengeId,
+              title,
+              CONCAT(CONCAT(DATE_FORMAT(startDay, '%m/%d/'), CASE DAYOFWEEK(startDay)
+                                                                WHEN '1' THEN '일'
+                                                                WHEN '2' THEN '월'
+                                                                WHEN '3' THEN '화'
+                                                                WHEN '4' THEN '수'
+                                                                WHEN '5' THEN '목'
+                                                                WHEN '6' THEN '금'
+                                                                WHEN '7' THEN '토'
+                  END
+                        ), CONCAT(DATE_FORMAT(endDay, ' - %m/%d/'), CASE DAYOFWEEK(endDay)
+                                                                        WHEN '1' THEN '일'
+                                                                        WHEN '2' THEN '월'
+                                                                        WHEN '3' THEN '화'
+                                                                        WHEN '4' THEN '수'
+                                                                        WHEN '5' THEN '목'
+                                                                        WHEN '6' THEN '금'
+                                                                        WHEN '7' THEN '토'
+                  END))                          as period,
+              CONCAT(week, '주')                  as week,
+              F.viewName,
+              IF(IC.userId = 1, TRUE, FALSE)         as interest,
+              IFNULL(ROUND(AVG(CR.score), 2), 0) as score,
+              (SELECT COUNT(userId) FROM challengeparticipant CP2 WHERE CP2.challengeId=C.challengeId) as participationCount,
+              S.subjectName,
+              ImageUrl
+        FROM challenge C
+                JOIN frequency F ON C.frequencyId = F.frequencyId
+                LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
+                LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
+                JOIN subject S ON C.subjectId = S.subjectId
+        WHERE C.challengeId in (SELECT challengeId FROM interestedchallenge WHERE userId = ?)
+        GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl;
+      `,
+      add: 'INSERT INTO interestedchallenge (userId, challengeId) VALUES (?, ?);',
+      delete: 'DELETE FROM interestedchallenge WHERE userId =? AND challengeId = ?;'
+    },
   },
   challenge: {
     isExistChallenge: `SELECT challengeId FROM challenge WHERE challengeId = ?;`,
     participate: `INSERT INTO challengeparticipant (challengeId, userId, money) VALUES (?, ?, ?);`,
-    interest: {
-      get: 'SELECT * FROM interestedchallenge WHERE userId = ?;',
-      add: 'INSERT INTO interestedchallenge (userId, challengeId) VALUES (?, ?);',
-      delete: 'DELETE FORM interestedchallenge userId =? , challengeId = ?;'
-    },
     possibleCertification: `
      select C.challengeId, title, 
             CONCAT(CONCAT(DATE_FORMAT(startDay, '%Y.%m.%d '), CASE DAYOFWEEK(startDay)
@@ -325,7 +362,8 @@ module.exports = {
         where CP.userId = ?;
     `,
     certificate: `INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);`,
-    isExistSubject: `SELECT subjectId FROM subject WHERE subjectId=?`,
+    isExistSubject: `SELECT subjectId FROM subject WHERE subjectId = ?`,
     challengeBySubjectId: `SELECT * FROM challenge WHERE subjectId = ?`,
+    isExistHashTag: `SELECT tagId FROM hashtag WHERE tagid = ?`,
   }
 };
