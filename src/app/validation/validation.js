@@ -1,10 +1,12 @@
-const { checkSchema, body } = require('express-validator');
+const { checkSchema, body, param } = require('express-validator');
 
 const crypto = require('crypto');
 
 const { requestNonTransactionQuery } = require('../../../config/database');
 
 const queries = require('../utils/queries');
+
+const { snsInfo } = require('../utils/function');
 
 module.exports = {
   userValidation: {
@@ -52,6 +54,14 @@ module.exports = {
         }
         return {};
       }),
+    checkId: param('id').custom(async (userId) => {
+      const { result: user } = await requestNonTransactionQuery(queries.user.isExistUser, [userId]);
+
+      if (user.length < 1) {
+        return Promise.reject({ code: 316, message: 'user is not exist' });
+      }
+      return {};
+    }),
   },
   loginValidation: {
     checkInput: checkSchema({
@@ -92,9 +102,17 @@ module.exports = {
 
         return {};
       }),
-    sns: body('accessToken')
-      .notEmpty()
-      .withMessage({ code: 310, message: 'This accessToken format is not valid.' }),
+    sns: {
+      accessToken: body('accessToken')
+        .notEmpty()
+        .withMessage({ code: 310, message: 'This accessToken format is not valid.' }),
+      name: param('snsName').custom(snsName => {
+        if (!snsInfo[snsName]) {
+          return Promise.reject({ code: 315, message: 'SNS Name Incorrect' });
+        }
+        return {}
+      }),
+    }
   },
   updateValidation: {
     password: checkSchema({
@@ -111,4 +129,30 @@ module.exports = {
       .isURL({})
       .withMessage({ code: 311, message: 'This url format is not valid.' }),
   },
+  challengeValidation: {
+    check: {
+      id: param('challengeId').custom(async (challengeId) => {
+        const { result: challenge } = await requestNonTransactionQuery(queries.challenge.isExistChallenge, [challengeId]);
+
+        if (challenge.length < 1) {
+          return Promise.reject({ code: 317, message: 'challenge is not exist' });
+        }
+        return {};
+      }),
+      subjectId: param('subjectId').custom(async (subjectId) => {
+        const { result: subject } = await requestNonTransactionQuery(queries.challenge.isExistSubject, [subjectId]);
+
+        if (subject.length < 1) {
+          return Promise.reject({ code: 317, message: 'subject is not exist' });
+        }
+        return {};
+      }),
+    },
+    participate: body('money')
+      .notEmpty()
+      .withMessage({ code: 318, message: 'money value is empty' }),
+    },
+    certificate: body('photoUrl')
+      .isURL()
+      .withMessage({ code: 319, message: 'photoUrl is not Valid' }),
 };

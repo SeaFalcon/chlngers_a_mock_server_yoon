@@ -8,7 +8,11 @@
     "dev": "port=4444 nodemon index.js",
     "prod": "port=3333 nodemon index.js",
     "devForever": "port=4444 forever start index.js",
-    "prodForever": "port=3333 forever start index.js"
+    "stopDev": "port=4444 forever stop index.js",
+    "restartDev": "port=4444 forever restart index.js",
+    "prodForever": "port=3333 forever start index.js",
+    "stopProd": "port=3333 forever restart index.js",
+    "restartProd": "port=3333 forever restart index.js"
   },
   "repository": {
     "type": "git",

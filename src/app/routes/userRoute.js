@@ -24,16 +24,23 @@ module.exports = (app) => {
     user.login,
   );
   app.post(
-    '/snsLogin/:snsName',
-    loginValidation.sns,
+    '/login/:snsName',
+    loginValidation.sns.accessToken,
+    loginValidation.sns.name,
     user.snsLogin,
   );
 
   // select
   app.get(
-    '/user/:id/myPage',
+    '/user/:id/mypage',
     jwtMiddleware,
+    userValidation.checkId,
     user.getUserPage,
+  );
+  app.get(
+    '/mypage',
+    jwtMiddleware,
+    user.myPage,
   );
 
   // update
@@ -55,7 +62,7 @@ module.exports = (app) => {
     user.update.password,
   );
   app.patch(
-    '/user/profileImageUrl',
+    '/user/image',
     jwtMiddleware,
     updateValidation.profileImageUrl,
     user.update.profileImageUrl,

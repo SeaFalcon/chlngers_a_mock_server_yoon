@@ -129,19 +129,203 @@ module.exports = {
             F.viewName,
             IF(IC.userId = ?, 'true', 'false')         as interest,
             IFNULL(ROUND(AVG(CR.score), 2), 0) as score,
-            COUNT(CP.userId) as participationCount,
+            (SELECT COUNT(userId) FROM challengeparticipant CP2 WHERE CP2.challengeId=C.challengeId) as participationCount,
             S.subjectName,
             ImageUrl
         FROM challenge C
               JOIN frequency F ON C.frequencyId = F.frequencyId
               LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
               LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
-              LEFT JOIN challengeparticipant CP on C.challengeId = CP.challengeId
               JOIN subject S ON C.subjectId = S.subjectId
         GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl
     `,
     random: '\nORDER BY RAND()',
     limit: '\nLIMIT ?, ?',
     subject: 'SELECT * FROM subject;',
+    cumulativeParticipation: `
+        SELECT COUNT(userId)                      as cumulativeParticipation,
+              CONCAT(FORMAT(SUM(money), 0), '원') as cumulativeParticipationAmount
+        FROM challengeparticipant;
+    `,
+    challengeDetail: {
+      get: `
+      SELECT C.challengeId,
+              title,
+              CONCAT(CONCAT(DATE_FORMAT(startDay, '%m/%d/'), CASE DAYOFWEEK(startDay)
+                                                                WHEN '1' THEN '일'
+                                                                WHEN '2' THEN '월'
+                                                                WHEN '3' THEN '화'
+                                                                WHEN '4' THEN '수'
+                                                                WHEN '5' THEN '목'
+                                                                WHEN '6' THEN '금'
+                                                                WHEN '7' THEN '토'
+                  END
+                        ), CONCAT(DATE_FORMAT(endDay, ' - %m/%d/'), CASE DAYOFWEEK(endDay)
+                                                                        WHEN '1' THEN '일'
+                                                                        WHEN '2' THEN '월'
+                                                                        WHEN '3' THEN '화'
+                                                                        WHEN '4' THEN '수'
+                                                                        WHEN '5' THEN '목'
+                                                                        WHEN '6' THEN '금'
+                                                                        WHEN '7' THEN '토'
+                  END))                                 as period,
+              CONCAT(week, '주')                         as week,
+              CONCAT(F.viewName, ' 인증')                 as frequency,
+              IF(IC.userId = ?, TRUE, FALSE)            as interest,
+              IFNULL(ROUND(AVG(CR.score), 2), 0)        as score,
+              COUNT(CP.userId)                          as challengerCount,
+              CONCAT(FORMAT(SUM(CP.money), 0), '원')     as gatheredAmount,
+              S.subjectName,
+              ImageUrl,
+              certificationMethod,
+              F.viewName,
+              startTime,
+              endTime,
+              IF(endTime - startTime = 0, '24시간', '')   as availableTime,
+              certificationCountPerDay,
+              certificationInterval,
+              IF(certificationMeans = 'C', '불가능', '가능') as galleryAvailable,
+              goodPhotoUrl,
+              goodPhotoDescription,
+              badPhotoUrl,
+              badPhotoDescription,
+              caution,
+              introduction,
+              COUNT(CR.userId) as reviewCount,
+              (SELECT IF(COUNT(dayOfWeek) = 7, '월-일', '월-금') FROM challengeavailabledayofweek CA WHERE CA.challengeId = C.challengeId) as availableDayOfWeek,
+              minFee,
+              maxFee
+        FROM challenge C
+                JOIN frequency F ON C.frequencyId = F.frequencyId
+                LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
+                LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
+                LEFT JOIN challengeparticipant CP on C.challengeId = CP.challengeId
+                JOIN subject S ON C.subjectId = S.subjectId
+        WHERE C.challengeId = ?
+        GROUP BY CP.userId
+        LIMIT 1;
+      `,
+      reviews: `
+        SELECT *
+        FROM challengereview
+        WHERE challengeId = ?
+        LIMIT 5;
+      `,
+      certifications: `
+        SELECT certificationId, photoUrl
+        FROM challengecertification
+        WHERE challengeId = ?
+        LIMIT 6;
+      `,
+      availableDayOfWeek: `
+        SELECT dayOfWeek
+        FROM challengeavailabledayofweek
+        WHERE challengeId = ?;
+      `,
+      impossible: `
+      SELECT C.challengeId,
+              title,
+              CONCAT(CONCAT(DATE_FORMAT(startDay, '%m/%d/'), CASE DAYOFWEEK(startDay)
+                                                                WHEN '1' THEN '일'
+                                                                WHEN '2' THEN '월'
+                                                                WHEN '3' THEN '화'
+                                                                WHEN '4' THEN '수'
+                                                                WHEN '5' THEN '목'
+                                                                WHEN '6' THEN '금'
+                                                                WHEN '7' THEN '토'
+                  END
+                        ), CONCAT(DATE_FORMAT(endDay, ' - %m/%d/'), CASE DAYOFWEEK(endDay)
+                                                                        WHEN '1' THEN '일'
+                                                                        WHEN '2' THEN '월'
+                                                                        WHEN '3' THEN '화'
+                                                                        WHEN '4' THEN '수'
+                                                                        WHEN '5' THEN '목'
+                                                                        WHEN '6' THEN '금'
+                                                                        WHEN '7' THEN '토'
+                  END))                          as period,
+              CONCAT(week, '주')                  as week,
+              F.viewName,
+              IF(IC.userId = ?, TRUE, FALSE)         as interest,
+              IFNULL(ROUND(AVG(CR.score), 2), 0) as score,
+              S.subjectName,
+              ImageUrl,
+              (SELECT COUNT(userId) FROM challengeparticipant CP2 WHERE CP2.challengeId=C.challengeId) as participationCount
+        FROM challenge C
+                JOIN frequency F ON C.frequencyId = F.frequencyId
+                LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
+                LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
+                JOIN subject S ON C.subjectId = S.subjectId
+        WHERE C.subjectId = (SELECT subjectId FROM challenge WHERE challengeId = ?) AND C.challengeId != ?
+        GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl;
+      `
+    }
   },
+  user: {
+    isExistUser: `SELECT userId FROM user WHERE userId=?`,
+    interestField: {
+      get: `
+        SELECT HT.tagId, HT.tagName, COUNT(CT.challengeId) as challengeCount, IFNULL(IT.userId, false) as isFollowed
+        FROM hashtag HT
+                JOIN challengetag CT on HT.tagId = CT.tagId
+                LEFT JOIN interesttag IT ON HT.tagid = IT.tagId AND IT.userId = ?
+        GROUP BY HT.tagId, HT.tagName
+        ORDER BY HT.tagId;
+      `,
+      add: 'INSERT INTO interesttag (userId, tagId) VALUES (?, ?);',
+      delete: 'DELETE FROM interesttag WHERE userId = ?, tagId = ?;',
+    }
+  },
+  challenge: {
+    isExistChallenge: `SELECT challengeId FROM challenge WHERE challengeId = ?;`,
+    participate: `INSERT INTO challengeparticipant (challengeId, userId, money) VALUES (?, ?, ?);`,
+    interest: {
+      get: 'SELECT * FROM interestedchallenge WHERE userId = ?;',
+      add: 'INSERT INTO interestedchallenge (userId, challengeId) VALUES (?, ?);',
+      delete: 'DELETE FORM interestedchallenge userId =? , challengeId = ?;'
+    },
+    possibleCertification: `
+     select C.challengeId, title, 
+            CONCAT(CONCAT(DATE_FORMAT(startDay, '%Y.%m.%d '), CASE DAYOFWEEK(startDay)
+                                                                  WHEN '1' THEN '(일)'
+                                                                  WHEN '2' THEN '(월)'
+                                                                  WHEN '3' THEN '(화)'
+                                                                  WHEN '4' THEN '(수)'
+                                                                  WHEN '5' THEN '(목)'
+                                                                  WHEN '6' THEN '(금)'
+                                                                  WHEN '7' THEN '(토)'
+                END
+                      ), CONCAT(DATE_FORMAT(endDay, ' - %Y.%m.%d '), CASE DAYOFWEEK(endDay)
+                                                                          WHEN '1' THEN '(일)'
+                                                                          WHEN '2' THEN '(월)'
+                                                                          WHEN '3' THEN '(화)'
+                                                                          WHEN '4' THEN '(수)'
+                                                                          WHEN '5' THEN '(목)'
+                                                                          WHEN '6' THEN '(금)'
+                                                                          WHEN '7' THEN '(토)'
+                END))                                                                                         as period,
+            F.viewName,
+            CONCAT(startTime, ' - ', endTime)                                                                 as possibleTime,
+            CONCAT(FORMAT(100 * ((SELECT COUNT(userId)
+               FROM challengecertification CC
+               WHERE CP.challengeId = CC.challengeId
+                 AND CC.userId = 1) / (DATEDIFF(endDay + 1, startDay) - (week - 1) * (7 - CASE F.frequencyId
+                                                                                              WHEN 1 THEN 7
+                                                                                              WHEN 2 THEN 5
+                                                                                              WHEN 3 THEN 2
+                                                                                              WHEN 4 THEN 6
+                                                                                              WHEN 5 THEN 5
+                                                                                              WHEN 6 THEN 4
+                                                                                              WHEN 7 THEN 3
+                                                                                              WHEN 8 THEN 2
+                                                                                              WHEN 9 THEN 1 END))),
+              2), '%')                                                                                        as achievementRate
+        from challenge C
+              JOIN challengeparticipant CP ON CP.challengeId = C.challengeId
+              JOIN frequency F ON C.frequencyId = F.frequencyId
+        where CP.userId = ?;
+    `,
+    certificate: `INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);`,
+    isExistSubject: `SELECT subjectId FROM subject WHERE subjectId=?`,
+    challengeBySubjectId: `SELECT * FROM challenge WHERE subjectId = ?`,
+  }
 };

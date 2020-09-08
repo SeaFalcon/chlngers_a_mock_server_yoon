@@ -40,7 +40,7 @@ module.exports = {
       }) => ({
         password, nickname, email, profileImageUrl,
       }),
-      errorCode: { code: 314, message: 'AccessToken not valid, naver Login Failed.' },
+      errorCode: { code: 314, message: 'AccessToken not valid, Naver Login Failed.' },
     },
   },
   getValidationResult: (req) => {

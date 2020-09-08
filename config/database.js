@@ -20,7 +20,7 @@ const singletonDBConnection = (function getSingletonDBConnection() {
   }
   return {
     async getInstance() {
-      if (!instance) {
+      if (!instance || instance.state === 'disconnected') {
         instance = await init();
       }
       return instance;
@@ -74,4 +74,61 @@ module.exports = {
   requestNonTransactionQuery,
   requestTransactionQuery,
   singletonDBConnection,
+  transaction
 };
+
+//
+
+let mysqlPool;
+
+async function getMysqlPool() {
+  if (!mysqlPool) {
+    mysqlPool = await mysql.createPool(mysqlConfig);
+    return mysqlPool;
+  }
+  return mysqlPool;
+}
+
+async function query(...args) {
+  const queryText = args[0];
+  const data = args[1];
+  await getMysqlPool();
+  const connection = await mysqlPool.getConnection();
+  const result = (await connection.query(queryText, data)) || null;
+  connection.release();
+  return result;
+}
+
+async function transaction(...args) {
+  await getMysqlPool();
+  const connection = await mysqlPool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await args[0](connection);
+    await connection.commit();
+    connection.release();
+    return "success";
+  } catch (error) {
+    console.log(error);
+    await connection.rollback();
+    connection.release();
+    return "fail";
+  } finally {
+    connection.release();
+  }
+}
+
+
+async function startTransaction(...args) {
+  await getMysqlPool();
+  const connection = await mysqlPool.getConnection();
+  let status = "fail";
+  try {
+    await connection.beginTransaction();
+    await args[0](connection);
+    status = "success";
+  } catch (error) {
+    console.log(error);
+  } return { connection, status };
+}
+
