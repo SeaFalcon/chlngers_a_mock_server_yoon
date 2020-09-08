@@ -257,13 +257,13 @@ module.exports = {
                 JOIN subject S ON C.subjectId = S.subjectId
         WHERE C.subjectId = (SELECT subjectId FROM challenge WHERE challengeId = ?) AND C.challengeId != ?
         GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl;
-      `
-    }
+      `,
+    },
   },
   user: {
-    isExistUser: `SELECT userId FROM user WHERE userId=?`,
-    isExistInterestTag: `SELECT tagId FROM interesttag WHERE userId=? AND tagId=?`,
-    isExistInterestChallenge: `SELECT challengeId FROM interestedchallenge WHERE userId=? AND challengeId=?`,
+    isExistUser: 'SELECT userId FROM user WHERE userId=?',
+    isExistInterestTag: 'SELECT tagId FROM interesttag WHERE userId=? AND tagId=?',
+    isExistInterestChallenge: 'SELECT challengeId FROM interestedchallenge WHERE userId=? AND challengeId=?',
     interestField: {
       get: `
         SELECT HT.tagId, HT.tagName, COUNT(CT.challengeId) as challengeCount, IFNULL(IT.userId, false) as isFollow
@@ -314,12 +314,12 @@ module.exports = {
         GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl;
       `,
       add: 'INSERT INTO interestedchallenge (userId, challengeId) VALUES (?, ?);',
-      delete: 'DELETE FROM interestedchallenge WHERE userId =? AND challengeId = ?;'
+      delete: 'DELETE FROM interestedchallenge WHERE userId =? AND challengeId = ?;',
     },
   },
   challenge: {
-    isExistChallenge: `SELECT challengeId FROM challenge WHERE challengeId = ?;`,
-    participate: `INSERT INTO challengeparticipant (challengeId, userId, money) VALUES (?, ?, ?);`,
+    isExistChallenge: 'SELECT challengeId FROM challenge WHERE challengeId = ?;',
+    participate: 'INSERT INTO challengeparticipant (challengeId, userId, money) VALUES (?, ?, ?);',
     possibleCertification: `
      select C.challengeId, title, 
             CONCAT(CONCAT(DATE_FORMAT(startDay, '%Y.%m.%d '), CASE DAYOFWEEK(startDay)
@@ -361,9 +361,9 @@ module.exports = {
               JOIN frequency F ON C.frequencyId = F.frequencyId
         where CP.userId = ?;
     `,
-    certificate: `INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);`,
-    isExistSubject: `SELECT subjectId FROM subject WHERE subjectId = ?`,
-    challengeBySubjectId: `SELECT * FROM challenge WHERE subjectId = ?`,
-    isExistHashTag: `SELECT tagId FROM hashtag WHERE tagid = ?`,
-  }
+    certificate: 'INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);',
+    isExistSubject: 'SELECT subjectId FROM subject WHERE subjectId = ?',
+    challengeBySubjectId: 'SELECT * FROM challenge WHERE subjectId = ?',
+    isExistHashTag: 'SELECT tagId FROM hashtag WHERE tagid = ?',
+  },
 };

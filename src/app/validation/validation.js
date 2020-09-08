@@ -150,13 +150,13 @@ module.exports = {
       accessToken: body('accessToken')
         .notEmpty()
         .withMessage({ code: 310, message: 'This accessToken format is not valid.' }),
-      name: param('snsName').custom(snsName => {
+      name: param('snsName').custom((snsName) => {
         if (!snsInfo[snsName]) {
           return Promise.reject({ code: 315, message: 'SNS Name Incorrect' });
         }
-        return {}
+        return {};
       }),
-    }
+    },
   },
   updateValidation: {
     password: checkSchema({

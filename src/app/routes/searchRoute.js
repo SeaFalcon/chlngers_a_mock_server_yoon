@@ -13,7 +13,7 @@ module.exports = (app) => {
     '/challenge/:challengeId',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    search.getChallengeDetail
+    search.getChallengeDetail,
   );
 
   // 챌린지 참여하기
@@ -22,14 +22,14 @@ module.exports = (app) => {
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.challengeValidation.participate,
-    search.participateChallenge
-  )
+    search.participateChallenge,
+  );
 
   // 인증 페이지 조회
   app.get(
     '/certifications',
     jwtMiddleware,
-    search.getPossibleCertification
+    search.getPossibleCertification,
   );
 
   // 인증하기
@@ -37,55 +37,55 @@ module.exports = (app) => {
     '/challenge/:challengeId/certification',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    search.certificateChallenge
+    search.certificateChallenge,
   );
 
-  // 탐색페이지 카테고리 더보기 
+  // 탐색페이지 카테고리 더보기
   app.get(
-    `/challenges/subject/:subjectId`,
+    '/challenges/subject/:subjectId',
     validation.challengeValidation.check.subjectId,
-    search.getChallengesBySubject
-  )
+    search.getChallengesBySubject,
+  );
 
   // 관심 챌린지
   app.get(
     '/user/interest-challenges',
     jwtMiddleware,
-    search.getInterestChallenges
-  )
+    search.getInterestChallenges,
+  );
   app.post(
     '/user/interest-challenge/:challengeId',
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.userValidation.interestChallenge.exist,
-    search.addInterestChallenge
-  )
+    search.addInterestChallenge,
+  );
   app.delete(
     '/user/interest-challenge/:challengeId',
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.userValidation.interestChallenge.notExist,
-    search.deleteInterestChallenges
-  )
+    search.deleteInterestChallenges,
+  );
 
   // 관심 분야
   app.get(
     '/user/interest-tags',
     jwtMiddleware,
-    search.getInterestTags
-  )
+    search.getInterestTags,
+  );
   app.post(
     '/user/interest-tag/:tagId',
     jwtMiddleware,
     validation.userValidation.interestField.checkId,
     validation.userValidation.interestField.exist,
-    search.addInterestTag
-  )
+    search.addInterestTag,
+  );
   app.delete(
     '/user/interest-tag/:tagId',
     jwtMiddleware,
     validation.userValidation.interestField.checkId,
     validation.userValidation.interestField.notExist,
-    search.deleteInterestTag
-  )
+    search.deleteInterestTag,
+  );
 };

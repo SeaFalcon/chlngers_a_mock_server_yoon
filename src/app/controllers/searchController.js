@@ -9,7 +9,7 @@ exports.getChallenges = async (req, res) => {
 
   const {
     search: {
-      getChallenges, subject: getSubjects, cumulativeParticipation: getCumulativeParticipation// random, limit,
+      getChallenges, subject: getSubjects, cumulativeParticipation: getCumulativeParticipation, // random, limit,
     },
   } = queries;
 
@@ -36,19 +36,19 @@ exports.getChallenges = async (req, res) => {
       {
         gender: 'man',
         challenges: {
-          'tens': shuffleArray([...allChallenges]).slice(0, 9),
-          'twenties': shuffleArray([...allChallenges]).slice(0, 9),
-          'thirties': shuffleArray([...allChallenges]).slice(0, 9),
-          'forties': shuffleArray([...allChallenges]).slice(0, 9),
+          tens: shuffleArray([...allChallenges]).slice(0, 9),
+          twenties: shuffleArray([...allChallenges]).slice(0, 9),
+          thirties: shuffleArray([...allChallenges]).slice(0, 9),
+          forties: shuffleArray([...allChallenges]).slice(0, 9),
         },
       },
       {
         gender: 'woman',
         challenges: {
-          'tens': shuffleArray([...allChallenges]).slice(0, 9),
-          'twenties': shuffleArray([...allChallenges]).slice(0, 9),
-          'thirties': shuffleArray([...allChallenges]).slice(0, 9),
-          'forties': shuffleArray([...allChallenges]).slice(0, 9),
+          tens: shuffleArray([...allChallenges]).slice(0, 9),
+          twenties: shuffleArray([...allChallenges]).slice(0, 9),
+          thirties: shuffleArray([...allChallenges]).slice(0, 9),
+          forties: shuffleArray([...allChallenges]).slice(0, 9),
         },
       },
     ],
@@ -64,12 +64,18 @@ exports.getChallenges = async (req, res) => {
 exports.getChallengeDetail = async (req, res) => {
   const { verifiedToken: { id }, params: { challengeId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
 
-  const { search: { challengeDetail: { get, certifications, impossible, reviews } } } = queries;
+  const {
+    search: {
+      challengeDetail: {
+        get, certifications, impossible, reviews,
+      },
+    },
+  } = queries;
 
   const { isSuccess: detailSuccess, result: detailResult } = await requestNonTransactionQuery(get, [id, challengeId]);
   const { isSuccess: certificationSuccess, result: certificationsResult } = await requestNonTransactionQuery(certifications, [challengeId]);
@@ -82,8 +88,8 @@ exports.getChallengeDetail = async (req, res) => {
       reviewsResult,
       certificationsResult,
       impossiblesResult,
-      ...makeSuccessResponse('챌린지 상세 조회 성공')
-    })
+      ...makeSuccessResponse('챌린지 상세 조회 성공'),
+    });
   }
 
   if (!detailSuccess) return res.status(500).send(`Error: ${detailResult.message}`);
@@ -95,7 +101,7 @@ exports.getChallengeDetail = async (req, res) => {
 exports.participateChallenge = async (req, res) => {
   const { verifiedToken: { id }, params: { challengeId }, body: { money } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -106,8 +112,8 @@ exports.participateChallenge = async (req, res) => {
 
   if (participationSuccess) {
     return res.json({
-      ...makeSuccessResponse('챌린지 참가 성공')
-    })
+      ...makeSuccessResponse('챌린지 참가 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${participationResult.message}`);
@@ -116,7 +122,7 @@ exports.participateChallenge = async (req, res) => {
 exports.getPossibleCertification = async (req, res) => {
   const { verifiedToken: { id } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -128,8 +134,8 @@ exports.getPossibleCertification = async (req, res) => {
   if (possibleCertificationSuccess) {
     return res.json({
       possibleCertificationResult,
-      ...makeSuccessResponse('인증 페이지 조회 성공')
-    })
+      ...makeSuccessResponse('인증 페이지 조회 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${possibleCertificationResult.message}`);
@@ -138,7 +144,7 @@ exports.getPossibleCertification = async (req, res) => {
 exports.certificateChallenge = async (req, res) => {
   const { verifiedToken: { id }, params: { challengeId }, body: { photoUrl, content } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -149,17 +155,17 @@ exports.certificateChallenge = async (req, res) => {
 
   if (certificateSuccess) {
     return res.json({
-      ...makeSuccessResponse('챌린지 인증 성공')
-    })
+      ...makeSuccessResponse('챌린지 인증 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${certificateResult.message}`);
-}
+};
 
 exports.getChallengesBySubject = async (req, res) => {
   const { params: { subjectId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -171,8 +177,8 @@ exports.getChallengesBySubject = async (req, res) => {
   if (challengeBySubjectSuccess) {
     return res.json({
       challengeBySubjectResult,
-      ...makeSuccessResponse('카테고리 별 챌린지 조회 성공')
-    })
+      ...makeSuccessResponse('카테고리 별 챌린지 조회 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${challengeBySubjectResult.message}`);
@@ -181,7 +187,7 @@ exports.getChallengesBySubject = async (req, res) => {
 exports.getInterestChallenges = async (req, res) => {
   const { verifiedToken: { id } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -193,16 +199,16 @@ exports.getInterestChallenges = async (req, res) => {
   if (interestChallengeSuccess) {
     return res.json({
       interestChallengeResult,
-      ...makeSuccessResponse('관심 챌린지 조회 성공')
-    })
+      ...makeSuccessResponse('관심 챌린지 조회 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${interestChallengeResult.message}`);
-}
+};
 exports.addInterestChallenge = async (req, res) => {
   const { verifiedToken: { id }, params: { challengeId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -213,16 +219,16 @@ exports.addInterestChallenge = async (req, res) => {
 
   if (isSuccess) {
     return res.json({
-      ...makeSuccessResponse('관심 챌린지 추가 성공')
-    })
+      ...makeSuccessResponse('관심 챌린지 추가 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${result.message}`);
-}
+};
 exports.deleteInterestChallenges = async (req, res) => {
   const { verifiedToken: { id }, params: { challengeId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -233,16 +239,16 @@ exports.deleteInterestChallenges = async (req, res) => {
 
   if (isSuccess) {
     return res.json({
-      ...makeSuccessResponse('관심 챌린지 제거 성공')
-    })
+      ...makeSuccessResponse('관심 챌린지 제거 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${result.message}`);
-}
+};
 exports.getInterestTags = async (req, res) => {
   const { verifiedToken: { id } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -254,16 +260,16 @@ exports.getInterestTags = async (req, res) => {
   if (interestTagSuccess) {
     return res.json({
       interestTagResult,
-      ...makeSuccessResponse('관심분야 리스트 조회 성공')
-    })
+      ...makeSuccessResponse('관심분야 리스트 조회 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${interestTagResult.message}`);
-}
+};
 exports.addInterestTag = async (req, res) => {
   const { verifiedToken: { id }, params: { tagId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -274,16 +280,16 @@ exports.addInterestTag = async (req, res) => {
 
   if (isSuccess) {
     return res.json({
-      ...makeSuccessResponse('관심분야 팔로우 성공')
-    })
+      ...makeSuccessResponse('관심분야 팔로우 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${result.message}`);
-}
+};
 exports.deleteInterestTag = async (req, res) => {
   const { verifiedToken: { id }, params: { tagId } } = req;
 
-  const errors = getValidationResult(req)
+  const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
@@ -294,9 +300,9 @@ exports.deleteInterestTag = async (req, res) => {
 
   if (isSuccess) {
     return res.json({
-      ...makeSuccessResponse('관심분야 언팔로우 성공')
-    })
+      ...makeSuccessResponse('관심분야 언팔로우 성공'),
+    });
   }
 
   return res.status(500).send(`Error: ${result.message}`);
-}
+};

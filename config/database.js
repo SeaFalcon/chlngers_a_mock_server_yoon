@@ -69,14 +69,6 @@ const requestTransactionQuery = async (sql, params) => {
   }
 };
 
-module.exports = {
-  pool,
-  requestNonTransactionQuery,
-  requestTransactionQuery,
-  singletonDBConnection,
-  transaction
-};
-
 //
 
 let mysqlPool;
@@ -107,28 +99,36 @@ async function transaction(...args) {
     await args[0](connection);
     await connection.commit();
     connection.release();
-    return "success";
+    return 'success';
   } catch (error) {
     console.log(error);
     await connection.rollback();
     connection.release();
-    return "fail";
+    return 'fail';
   } finally {
     connection.release();
   }
 }
 
-
 async function startTransaction(...args) {
   await getMysqlPool();
   const connection = await mysqlPool.getConnection();
-  let status = "fail";
+  let status = 'fail';
   try {
     await connection.beginTransaction();
     await args[0](connection);
-    status = "success";
+    status = 'success';
   } catch (error) {
     console.log(error);
   } return { connection, status };
 }
 
+module.exports = {
+  pool,
+  requestNonTransactionQuery,
+  requestTransactionQuery,
+  singletonDBConnection,
+  transaction,
+  query,
+  startTransaction,
+};
