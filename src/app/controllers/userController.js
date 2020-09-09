@@ -267,3 +267,35 @@ exports.delete = async (req, res) => {
 
   return res.status(500).send(`Error: ${result.message}`);
 };
+
+exports.getProfile = async (req, res) => {
+  const { verifiedToken: { id: userId } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { isSuccess: userInfoRowsSuccess, result: userInfoRows } = await requestNonTransactionQuery(queries.mypage.user, [userId]);
+  const { isSuccess: interestFieldsSuccess, result: interestFields } = await requestNonTransactionQuery(queries.mypage.interestField, [userId]);
+
+  const {
+    nickname, introduction, email, name, phoneNumber,
+  } = userInfoRows[0];
+
+  if (userInfoRowsSuccess && interestFieldsSuccess) {
+    return res.json({
+      profile: {
+        nickname,
+        interestFields: interestFields.map((field) => field.tagName),
+        introduction,
+        email,
+        name,
+        phoneNumber,
+      },
+      ...makeSuccessResponse('마이 프로필 조회 성공'),
+    });
+  }
+
+  return res.status(500).send('Error: 마이페이지 조회 실패');
+};

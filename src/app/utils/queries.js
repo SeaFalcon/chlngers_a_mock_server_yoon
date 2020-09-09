@@ -68,7 +68,10 @@ module.exports = {
           U.introduction,
           G.gradeId,
           G.gradeName,
-          SUM(R.amount) as reward
+          SUM(R.amount) as reward,
+          email,
+          IFNULL(phoneNumber, '') as phoneNumber,
+          name
       FROM user U
             JOIN grade G ON U.experience >= G.experienceCriteriaMin AND U.experience <= G.experienceCriteriaMax
             LEFT JOIN reward R ON U.userId = R.userId and R.type = 'A'
@@ -365,5 +368,30 @@ module.exports = {
     isExistSubject: 'SELECT subjectId FROM subject WHERE subjectId = ?',
     challengeBySubjectId: 'SELECT * FROM challenge WHERE subjectId = ?',
     isExistHashTag: 'SELECT tagId FROM hashtag WHERE tagid = ?',
+  },
+  friend: {
+    follower: `
+      SELECT userId, name, nickname, profileImageUrl, IF(status = 'Y', '팔로잉', '대기중') as status
+      FROM friend
+              JOIN user ON userId = userId1
+      WHERE userId2 = ?;
+    `,
+    following: `
+      SELECT userId, name, nickname, profileImageUrl, IF(status = 'Y', '팔로잉', '대기중') as status
+      FROM friend
+              JOIN user ON userId = userId2
+      WHERE userId1 = ?;
+    `,
+    recommend: `
+      SELECT userId, name, nickname, profileImageUrl
+      FROM user
+              JOIN friend on userId != userId2
+      WHERE userId1 != ?
+      ORDER BY RAND()
+      LIMIT 10;
+    `,
+    requestFollow: 'INSERT INTO friend (userId1, userId2, status) VALUES (?, ?, \'N\');',
+    acceptFollow: 'UPDATE friend SET status = \'Y\' WHERE userId1 = ? AND userId2 = ?;',
+    deleteFollow: 'DELETE FROM friend WHERE userId1 = ? AND userId2 = ?;',
   },
 };

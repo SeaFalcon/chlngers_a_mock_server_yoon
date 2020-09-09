@@ -8,7 +8,9 @@ const { swaggerSpec, swaggerUi } = require('./swagger');
 
 const indexRoute = require('../src/app/routes/indexRoute');
 const userRoute = require('../src/app/routes/userRoute');
-const searchRoute = require('../src/app/routes/searchRoute');
+const challengeRoute = require('../src/app/routes/challengeRoute');
+const friendRoute = require('../src/app/routes/friendRoute');
+const feedRoute = require('../src/app/routes/feedRoute');
 
 module.exports = () => {
   const app = express();
@@ -35,7 +37,9 @@ module.exports = () => {
   /* App (Android, iOS) */
   indexRoute(app);
   userRoute(app);
-  searchRoute(app);
+  challengeRoute(app);
+  friendRoute(app);
+  feedRoute(app);
 
   /* Web */
   // require('../src/web/routes/indexRoute')(app);

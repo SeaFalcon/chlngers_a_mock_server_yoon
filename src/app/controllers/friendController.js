@@ -1,0 +1,120 @@
+const { getValidationResult, makeSuccessResponse } = require('../utils/function');
+
+const { requestNonTransactionQuery, requestTransactionQuery } = require('../../../config/database');
+
+const queries = require('../utils/queries');
+
+exports.getFollower = async (req, res) => {
+  const { verifiedToken: { id } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { friend: { follower, recommend } } = queries;
+
+  const { isSuccess: followerSuccess, result: followerResult } = await requestNonTransactionQuery(follower, [id]);
+  const { isSuccess: recommendSuccess, result: recommendResult } = await requestNonTransactionQuery(recommend, [id]);
+
+  if (followerSuccess && recommendSuccess) {
+    return res.json({
+      followerResult,
+      recommendResult,
+      ...makeSuccessResponse('팔로워 리스트 조회 성공'),
+    });
+  }
+
+  if (!followerSuccess) return res.status(500).send(`Error: ${followerResult.message}`);
+  if (!recommendSuccess) return res.status(500).send(`Error: ${recommendResult.message}`);
+};
+
+exports.getFollowing = async (req, res) => {
+  const { verifiedToken: { id } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { friend: { following, recommend } } = queries;
+
+  const { isSuccess: followingSuccess, result: followingResult } = await requestNonTransactionQuery(following, [id]);
+  const { isSuccess: recommendSuccess, result: recommendResult } = await requestNonTransactionQuery(recommend, [id]);
+
+  console.log(followingResult);
+
+  if (followingSuccess && recommendSuccess) {
+    return res.json({
+      followingResult,
+      recommendResult,
+      ...makeSuccessResponse('팔로잉 리스트 조회 성공'),
+    });
+  }
+
+  if (!followingSuccess) return res.status(500).send(`Error: ${followingResult.message}`);
+  if (!recommendSuccess) return res.status(500).send(`Error: ${recommendResult.message}`);
+};
+
+exports.requestFollow = async (req, res) => {
+  const { verifiedToken: { id: userId1 }, params: { id: userId2 } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { friend: { requestFollow } } = queries;
+
+  const { isSuccess: requestFollowSuccess, result: requestFollowResult } = await requestTransactionQuery(requestFollow, [userId1, userId2]);
+
+  if (requestFollowSuccess) {
+    return res.json({
+      ...makeSuccessResponse('팔로우 요청 성공'),
+    });
+  }
+
+  return res.status(500).send(`Error: ${requestFollowResult.message}`);
+};
+
+exports.acceptFollow = async (req, res) => {
+  const { verifiedToken: { id: userId1 }, params: { id: userId2 } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { friend: { acceptFollow } } = queries;
+
+  const { isSuccess: acceptFollowSuccess, result: acceptFollowResult } = await requestTransactionQuery(acceptFollow, [userId1, userId2]);
+
+  if (acceptFollowSuccess) {
+    return res.json({
+      ...makeSuccessResponse('팔로우 수락 성공'),
+    });
+  }
+
+  return res.status(500).send(`Error: ${acceptFollowResult.message}`);
+};
+
+exports.deleteFollow = async (req, res) => {
+  const { verifiedToken: { id: userId1 }, params: { id: userId2 } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { friend: { deleteFollow } } = queries;
+
+  const { isSuccess: deleteFollowSuccess, result: deleteFollowResult } = await requestTransactionQuery(deleteFollow, [userId1, userId2]);
+
+  if (deleteFollowSuccess) {
+    return res.json({
+      ...makeSuccessResponse('팔로우 거절 / 언팔로우 성공'),
+    });
+  }
+
+  return res.status(500).send(`Error: ${deleteFollowResult.message}`);
+};

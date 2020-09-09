@@ -42,6 +42,11 @@ module.exports = (app) => {
     jwtMiddleware,
     user.myPage,
   );
+  app.get(
+    '/user-profile',
+    jwtMiddleware,
+    user.getProfile,
+  );
 
   // update
   app.patch(

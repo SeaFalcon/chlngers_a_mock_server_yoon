@@ -1,4 +1,4 @@
-const search = require('../controllers/searchController');
+const challenge = require('../controllers/challengeController');
 
 const jwtMiddleware = require('../../../config/jwtMiddleware');
 
@@ -6,14 +6,14 @@ const validation = require('../validation/validation');
 
 module.exports = (app) => {
   // 탐색 페이지 조회
-  app.get('/challenges', jwtMiddleware, search.getChallenges);
+  app.get('/challenges', jwtMiddleware, challenge.getChallenges);
 
   // 챌린지 상세보기
   app.get(
     '/challenge/:challengeId',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    search.getChallengeDetail,
+    challenge.getChallengeDetail,
   );
 
   // 챌린지 참여하기
@@ -22,14 +22,14 @@ module.exports = (app) => {
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.challengeValidation.participate,
-    search.participateChallenge,
+    challenge.participateChallenge,
   );
 
   // 인증 페이지 조회
   app.get(
     '/certifications',
     jwtMiddleware,
-    search.getPossibleCertification,
+    challenge.getPossibleCertification,
   );
 
   // 인증하기
@@ -37,55 +37,55 @@ module.exports = (app) => {
     '/challenge/:challengeId/certification',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    search.certificateChallenge,
+    challenge.certificateChallenge,
   );
 
   // 탐색페이지 카테고리 더보기
   app.get(
     '/challenges/subject/:subjectId',
     validation.challengeValidation.check.subjectId,
-    search.getChallengesBySubject,
+    challenge.getChallengesBySubject,
   );
 
   // 관심 챌린지
   app.get(
     '/user/interest-challenges',
     jwtMiddleware,
-    search.getInterestChallenges,
+    challenge.getInterestChallenges,
   );
   app.post(
     '/user/interest-challenge/:challengeId',
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.userValidation.interestChallenge.exist,
-    search.addInterestChallenge,
+    challenge.addInterestChallenge,
   );
   app.delete(
     '/user/interest-challenge/:challengeId',
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.userValidation.interestChallenge.notExist,
-    search.deleteInterestChallenges,
+    challenge.deleteInterestChallenges,
   );
 
   // 관심 분야
   app.get(
     '/user/interest-tags',
     jwtMiddleware,
-    search.getInterestTags,
+    challenge.getInterestTags,
   );
   app.post(
     '/user/interest-tag/:tagId',
     jwtMiddleware,
     validation.userValidation.interestField.checkId,
     validation.userValidation.interestField.exist,
-    search.addInterestTag,
+    challenge.addInterestTag,
   );
   app.delete(
     '/user/interest-tag/:tagId',
     jwtMiddleware,
     validation.userValidation.interestField.checkId,
     validation.userValidation.interestField.notExist,
-    search.deleteInterestTag,
+    challenge.deleteInterestTag,
   );
 };
