@@ -88,4 +88,24 @@ module.exports = (app) => {
     validation.userValidation.interestField.notExist,
     challenge.deleteInterestTag,
   );
+
+  // 개설 페이지 챌린지들 조회 (내가 개설한 챌린지 포함)
+
+  // 챌린지 개설
+
+  // 챌린지 삭제
+
+  // 챌린지 수정 (여러가지)
+
+  // 챌린지 리뷰
+
+  // 챌린지
+
+  // 인증 좋아요 / 취소
+
+  // 인증의 댓글
+
+  // 인증 댓글 수정
+
+  // 인증 댓글 삭제
 };

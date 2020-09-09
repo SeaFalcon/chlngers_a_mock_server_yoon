@@ -236,4 +236,9 @@ module.exports = {
         return {};
       }),
   },
+  feed: {
+    validPage: query('page')
+      .isNumeric()
+      .withMessage({ code: 328, message: 'page value must be numeric' }),
+  },
 };

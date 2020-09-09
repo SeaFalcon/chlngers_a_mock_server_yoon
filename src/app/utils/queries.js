@@ -410,4 +410,29 @@ module.exports = {
       SELECT * FROM friend WHERE userId1 = ? AND userId2 = ? AND status = ?
     `,
   },
+  feed: {
+    getAll: `
+      SELECT certificationId, photoUrl
+      FROM challengecertification CC
+              JOIN challenge C on CC.challengeId = C.challengeId
+      WHERE C.endDay > now()
+      LIMIT 15 OFFSET ?;
+    `,
+    getFollow: `
+      SELECT certificationId, photoUrl
+      FROM challengecertification CC
+              JOIN challenge C on CC.challengeId = C.challengeId
+      WHERE C.endDay > now() AND userId IN
+            (SELECT userId2 FROM friend WHERE userId1 = ?)
+      LIMIT 15 OFFSET ?;
+    `,
+    getCurrentMe: `
+      SELECT certificationId, photoUrl
+      FROM challengecertification CC
+              JOIN challenge C on CC.challengeId = C.challengeId
+      WHERE userId = ?
+        AND C.endDay > now()
+      LIMIT 15 OFFSET ?;
+    `,
+  },
 };
