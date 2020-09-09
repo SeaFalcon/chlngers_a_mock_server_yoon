@@ -299,3 +299,38 @@ exports.getProfile = async (req, res) => {
 
   return res.status(500).send('Error: 마이페이지 조회 실패');
 };
+
+exports.search = async (req, res) => {
+  const { verifiedToken: { id }, query: { keyword } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { isSuccess: searchSuccess, result: searchResult } = await requestNonTransactionQuery(queries.user.search, [id, keyword, keyword]);
+
+  const users = searchResult.map((user) => {
+    const userStatus = (status) => {
+      if (!status) return '팔로우';
+      return user.status === 'Y' ? '친구' : '대기중';
+    };
+
+    return {
+      userId: user.userId,
+      nickname: user.nickname,
+      name: user.name,
+      profileImageUrl: user.profileImageUrl,
+      status: userStatus(user.status),
+    };
+  });
+
+  if (searchSuccess) {
+    return res.json({
+      users,
+      ...makeSuccessResponse('유저 검색 성공'),
+    });
+  }
+
+  return res.status(500).send('Error: 유저 검색 실패');
+};

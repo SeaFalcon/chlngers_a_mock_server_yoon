@@ -3,6 +3,7 @@ const user = require('../controllers/userController');
 const jwtMiddleware = require('../../../config/jwtMiddleware');
 
 const { userValidation, loginValidation, updateValidation } = require('../validation/validation');
+const validation = require('../validation/validation');
 
 module.exports = (app) => {
   app.get('/check', jwtMiddleware, user.check);
@@ -78,5 +79,13 @@ module.exports = (app) => {
     '/user',
     jwtMiddleware,
     user.delete,
+  );
+
+  // 유저 검색
+  app.get(
+    '/users',
+    jwtMiddleware,
+    validation.userValidation.searchEmpty,
+    user.search,
   );
 };

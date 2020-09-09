@@ -1,4 +1,6 @@
-const { checkSchema, body, param } = require('express-validator');
+const {
+  checkSchema, body, param, query,
+} = require('express-validator');
 
 const crypto = require('crypto');
 
@@ -106,6 +108,14 @@ module.exports = {
         return {};
       }),
     },
+    searchEmpty: query('keyword').custom(async (keyword, { req: { verifiedToken: { id } } }) => {
+      const { result: users } = await requestNonTransactionQuery(queries.user.search, [id, keyword, keyword]);
+
+      if (users.length < 1) {
+        return Promise.reject({ code: 328, message: 'user not found try search another keywords' });
+      }
+      return {};
+    }),
   },
   loginValidation: {
     checkInput: checkSchema({

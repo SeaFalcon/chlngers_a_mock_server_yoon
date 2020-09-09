@@ -319,6 +319,16 @@ module.exports = {
       add: 'INSERT INTO interestedchallenge (userId, challengeId) VALUES (?, ?);',
       delete: 'DELETE FROM interestedchallenge WHERE userId =? AND challengeId = ?;',
     },
+    search: `
+     SELECT userId,
+            name,
+            nickname,
+            profileImageUrl,
+            IFNULL((SELECT status FROM friend WHERE userId1 = 1 and U.userId = userId2), '') as status
+        FROM user U
+        WHERE name like CONCAT('%', ?, '%')
+        OR nickname like CONCAT('%', ?, '%');
+    `,
   },
   challenge: {
     isExistChallenge: 'SELECT challengeId FROM challenge WHERE challengeId = ?;',
