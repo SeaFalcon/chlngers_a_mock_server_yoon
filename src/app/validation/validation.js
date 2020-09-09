@@ -205,6 +205,40 @@ module.exports = {
     participate: body('money')
       .notEmpty()
       .withMessage({ code: 318, message: 'money value is empty' }),
+    update: {
+      image: body('image')
+        .isURL()
+        .withMessage({ code: 329, message: 'image url is not Valid' }),
+      title: body('title')
+        .notEmpty()
+        .withMessage({ code: 330, message: 'title is empty' }),
+      hashtag: body('hashTag')
+        .isArray()
+        .withMessage({ code: 331, message: 'hashtag value is not Valid (value should be array)' })
+        .custom((hashtag) => {
+          if (hashtag && typeof hashtag === 'object') {
+            if (!hashtag.length) return Promise.reject({ code: 332, message: 'hashtag array length is 0' });
+
+            let errStatus = false;
+            hashtag.forEach((tag) => {
+              if (typeof tag !== 'string') errStatus = true;
+            });
+            if (errStatus) return Promise.reject({ code: 334, message: 'hashtag value must string' });
+          }
+          return {};
+        }),
+      examplePhotos: {
+        goodPhoto: body('goodPhotoUrl')
+          .isURL()
+          .withMessage({ code: 335, message: 'good photo value must url format' }),
+        badPhoto: body('badPhotoUrl')
+          .isURL()
+          .withMessage({ code: 336, message: 'bad photo value must url format' }),
+      },
+      introduction: body('introduction')
+        .notEmpty()
+        .withMessage({ code: 333, message: 'introduction is empty' }),
+    },
   },
   certificate: body('photoUrl')
     .isURL()
@@ -238,7 +272,9 @@ module.exports = {
   },
   feed: {
     validPage: query('page')
-      .isNumeric()
-      .withMessage({ code: 328, message: 'page value must be numeric' }),
+      .custom((page) => {
+        if (Number.isNaN(+page)) return Promise.reject({ code: 328, message: 'page value must be numeric' });
+        return {};
+      }),
   },
 };

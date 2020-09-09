@@ -90,22 +90,109 @@ module.exports = (app) => {
   );
 
   // 개설 페이지 챌린지들 조회 (내가 개설한 챌린지 포함)
+  app.get(
+    '/open',
+    jwtMiddleware,
+    challenge.getOpenPage,
+  );
+
+  // 챌린지 개설에 필요한 정보
+  app.get(
+    '/challenge-conditions',
+    jwtMiddleware,
+    challenge.needConditions,
+  );
 
   // 챌린지 개설
+  app.post(
+    '/challenge',
+    jwtMiddleware,
+    challenge.create,
+  );
 
   // 챌린지 삭제
+  app.delete(
+    '/challenge/:challengeId',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    challenge.delete,
+  );
 
-  // 챌린지 수정 (여러가지)
+  // 챌린지 수정
+  // 대표이미지 설정
+  app.patch(
+    '/challenge/:challengeId/image',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.challengeValidation.update.image,
+    challenge.update.image,
+  );
+  // 챌린지 제목
+  app.patch(
+    '/challenge/:challengeId/title',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.challengeValidation.update.title,
+    challenge.update.title,
+  );
+  // 챌린지 태그
+  app.patch(
+    '/challenge/:challengeId/hashtag',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.challengeValidation.update.hashtag,
+    challenge.update.hashtag,
+  );
+  // 챌린지 인증샷 (좋은, 나쁜)
+  app.patch(
+    '/challenge/:challengeId/example-photo',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.challengeValidation.update.examplePhotos.goodPhoto,
+    validation.challengeValidation.update.examplePhotos.badPhoto,
+    challenge.update.example,
+  );
+  // 챌린지 소개
+  app.patch(
+    '/challenge/:challengeId/introduction',
+    jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.challengeValidation.update.introduction,
+    challenge.update.introduction,
+  );
 
   // 챌린지 리뷰
+  app.post(
+    '/challenge/:challengeId/review',
+    jwtMiddleware,
+    challenge.createReview,
+  );
 
-  // 챌린지
+  // 인증 좋아요
+  app.post(
+    '/certification/:certificationId/like',
+    jwtMiddleware,
+    challenge.likeCertification,
+  );
 
-  // 인증 좋아요 / 취소
+  // 인증 좋아요 취소
+  app.delete(
+    '/certification/:certificationId/like',
+    jwtMiddleware,
+    challenge.cancelLikeCertification,
+  );
 
   // 인증의 댓글
-
-  // 인증 댓글 수정
+  app.post(
+    '/certification/:certificationId/comment',
+    jwtMiddleware,
+    challenge.createCertificationComment,
+  );
 
   // 인증 댓글 삭제
+  app.delete(
+    '/certification/:certificationId/comment',
+    jwtMiddleware,
+    challenge.deleteCertificationComment,
+  );
 };

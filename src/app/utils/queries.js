@@ -378,6 +378,103 @@ module.exports = {
     isExistSubject: 'SELECT subjectId FROM subject WHERE subjectId = ?',
     challengeBySubjectId: 'SELECT * FROM challenge WHERE subjectId = ?',
     isExistHashTag: 'SELECT tagId FROM hashtag WHERE tagid = ?',
+    needConditions: {
+      subject: 'SELECT * FROM subject;',
+      availableDayOfWeek: 'SELECT * FROM availabledayofweek;',
+      frequency: 'SELECT * FROM frequency;',
+    },
+    madeByMe: `
+       SELECT C.challengeId,
+              title,
+              CONCAT(CONCAT(DATE_FORMAT(startDay, '%m/%d/'), CASE DAYOFWEEK(startDay)
+                                                                WHEN '1' THEN '일'
+                                                                WHEN '2' THEN '월'
+                                                                WHEN '3' THEN '화'
+                                                                WHEN '4' THEN '수'
+                                                                WHEN '5' THEN '목'
+                                                                WHEN '6' THEN '금'
+                                                                WHEN '7' THEN '토'
+                  END
+                        ), CONCAT(DATE_FORMAT(endDay, ' - %m/%d/'), CASE DAYOFWEEK(endDay)
+                                                                        WHEN '1' THEN '일'
+                                                                        WHEN '2' THEN '월'
+                                                                        WHEN '3' THEN '화'
+                                                                        WHEN '4' THEN '수'
+                                                                        WHEN '5' THEN '목'
+                                                                        WHEN '6' THEN '금'
+                                                                        WHEN '7' THEN '토'
+                  END))                          as period,
+              CONCAT(week, '주')                  as week,
+              F.viewName,
+              IF(IC.userId = 1, TRUE, FALSE)         as interest,
+              IFNULL(ROUND(AVG(CR.score), 2), 0) as score,
+              COUNT(CP.userId)                   as participationCount,
+              S.subjectName,
+              ImageUrl
+          FROM challenge C
+                JOIN frequency F ON C.frequencyId = F.frequencyId
+                LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
+                LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
+                LEFT JOIN challengeparticipant CP on C.challengeId = CP.challengeId
+                JOIN subject S ON C.subjectId = S.subjectId
+          WHERE C.userId = ?
+          GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl;
+    `,
+    challengeByTag: `
+       SELECT C.challengeId,
+              title,
+              CONCAT(CONCAT(DATE_FORMAT(startDay, '%m/%d/'), CASE DAYOFWEEK(startDay)
+                                                                WHEN '1' THEN '일'
+                                                                WHEN '2' THEN '월'
+                                                                WHEN '3' THEN '화'
+                                                                WHEN '4' THEN '수'
+                                                                WHEN '5' THEN '목'
+                                                                WHEN '6' THEN '금'
+                                                                WHEN '7' THEN '토'
+                  END
+                        ), CONCAT(DATE_FORMAT(endDay, ' - %m/%d/'), CASE DAYOFWEEK(endDay)
+                                                                        WHEN '1' THEN '일'
+                                                                        WHEN '2' THEN '월'
+                                                                        WHEN '3' THEN '화'
+                                                                        WHEN '4' THEN '수'
+                                                                        WHEN '5' THEN '목'
+                                                                        WHEN '6' THEN '금'
+                                                                        WHEN '7' THEN '토'
+                  END))                                                                                  as period,
+              CONCAT(week, '주')                                                                          as week,
+              F.viewName,
+              IF(IC.userId = 1, TRUE, FALSE)                                                             as interest,
+              IFNULL(ROUND(AVG(CR.score), 2), 0)                                                         as score,
+              (SELECT COUNT(userId) FROM challengeparticipant CP2 WHERE CP2.challengeId = C.challengeId) as participationCount,
+              HT.tagName,
+              ImageUrl
+          FROM challenge C
+                JOIN frequency F ON C.frequencyId = F.frequencyId
+                LEFT JOIN interestedchallenge IC on C.challengeId = IC.challengeId
+                LEFT JOIN challengereview CR on C.challengeId = CR.challengeId
+                LEFT JOIN challengeparticipant CP on C.challengeId = CP.challengeId
+                JOIN challengetag CT ON C.challengeId = CT.challengeId
+                JOIN hashtag HT on CT.tagId = HT.tagId
+          GROUP BY C.challengeId, title, CONCAT(week, '주'), F.viewName, IF(IC.userId, TRUE, FALSE), ImageUrl;
+    `,
+    getHashtag: 'SELECT * FROM hashtag',
+    select: {
+      hashtag: 'SELECT tagId FROM hashtag WHERE tagName = ?',
+    },
+    insert: {
+      hashtag: 'INSERT INTO hashtag (tagName) VALUES (?);',
+      challengetag: 'INSERT INTO challengetag (challengeId, tagId) VALUES (?, ?);',
+    },
+    update: {
+      image: 'UPDATE challenge SET ImageUrl = ? WHERE challengeId = ?',
+      title: 'UPDATE challenge SET title = ? WHERE challengeId = ?',
+      introduction: 'UPDATE challenge SET introduction = ? WHERE challengeId = ?',
+      example: 'UPDATE challenge SET goodPhotoUrl = ?, badPhotoUrl = ? WHERE challengeId = ?',
+    },
+    delete: {
+      hashtag: 'DELETE FROM challengetag WHERE challengeId = ?',
+      challenge: 'DELETE FROM challenge WHERE challengeId = ?',
+    },
   },
   friend: {
     follower: `
@@ -422,7 +519,7 @@ module.exports = {
       SELECT certificationId, photoUrl
       FROM challengecertification CC
               JOIN challenge C on CC.challengeId = C.challengeId
-      WHERE C.endDay > now() AND userId IN
+      WHERE C.endDay > now() AND C.userId IN
             (SELECT userId2 FROM friend WHERE userId1 = ?)
       LIMIT 15 OFFSET ?;
     `,

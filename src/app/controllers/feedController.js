@@ -35,6 +35,8 @@ exports.getFeed = async (req, res) => {
 exports.getMoreAllChallenges = async (req, res) => {
   const { query: { page } } = req;
 
+  const pageValue = page || 0;
+
   const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
@@ -42,7 +44,7 @@ exports.getMoreAllChallenges = async (req, res) => {
 
   const { feed: { getAll } } = queries;
 
-  const { isSuccess: allChallengeSuccess, result: allChallengeResult } = await requestNonTransactionQuery(getAll, [page <= 0 ? 0 : page * 15]);
+  const { isSuccess: allChallengeSuccess, result: allChallengeResult } = await requestNonTransactionQuery(getAll, [pageValue <= 0 ? 0 : pageValue * 15]);
 
   if (allChallengeSuccess) {
     return res.json({
@@ -58,6 +60,8 @@ exports.getMoreAllChallenges = async (req, res) => {
 exports.getMoreFollowChallenges = async (req, res) => {
   const { verifiedToken: { id }, query: { page } } = req;
 
+  const pageValue = page || 0;
+
   const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
@@ -65,7 +69,7 @@ exports.getMoreFollowChallenges = async (req, res) => {
 
   const { feed: { getFollow } } = queries;
 
-  const { isSuccess: followSuccess, result: followResult } = await requestNonTransactionQuery(getFollow, [id, (page <= 0 ? 0 : page * 15)]);
+  const { isSuccess: followSuccess, result: followResult } = await requestNonTransactionQuery(getFollow, [id, (pageValue <= 0 ? 0 : pageValue * 15)]);
 
   if (followSuccess) {
     return res.json({
