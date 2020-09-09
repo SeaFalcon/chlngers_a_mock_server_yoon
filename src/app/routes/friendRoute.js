@@ -26,6 +26,7 @@ module.exports = (app) => {
     '/user/:id/follow',
     jwtMiddleware,
     validation.userValidation.checkId,
+    validation.followValidation.requestExist,
     friend.requestFollow,
   );
 
@@ -34,6 +35,8 @@ module.exports = (app) => {
     '/user/:id/follow/status',
     jwtMiddleware,
     validation.userValidation.checkId,
+    validation.followValidation.requestNotExist,
+    validation.followValidation.alreadyFriend,
     friend.acceptFollow,
   );
 
@@ -42,6 +45,7 @@ module.exports = (app) => {
     '/user/:id/follow',
     jwtMiddleware,
     validation.userValidation.checkId,
+    validation.followValidation.requestNotExist,
     friend.deleteFollow,
   );
 };

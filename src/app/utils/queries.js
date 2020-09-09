@@ -393,5 +393,11 @@ module.exports = {
     requestFollow: 'INSERT INTO friend (userId1, userId2, status) VALUES (?, ?, \'N\');',
     acceptFollow: 'UPDATE friend SET status = \'Y\' WHERE userId1 = ? AND userId2 = ?;',
     deleteFollow: 'DELETE FROM friend WHERE userId1 = ? AND userId2 = ?;',
+    isExistRequest: `
+      SELECT userId1, userId2 FROM friend WHERE userId1 = ? AND userId2 = ?
+    `,
+    getStatus: `
+      SELECT * FROM friend WHERE userId1 = ? AND userId2 = ? AND status = ?
+    `,
   },
 };

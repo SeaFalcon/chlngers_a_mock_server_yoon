@@ -199,4 +199,31 @@ module.exports = {
   certificate: body('photoUrl')
     .isURL()
     .withMessage({ code: 319, message: 'photoUrl is not Valid' }),
+  followValidation: {
+    requestExist: param('id').custom(async (userId2, { req: { verifiedToken: { id: userId1 } } }) => {
+      const { result: requestFollow } = await requestNonTransactionQuery(queries.friend.isExistRequest, [userId1, userId2]);
+
+      if (requestFollow.length) {
+        return Promise.reject({ code: 325, message: 'follow request is exist' });
+      }
+      return {};
+    }),
+    requestNotExist: param('id').custom(async (userId2, { req: { verifiedToken: { id: userId1 } } }) => {
+      const { result: requestFollow } = await requestNonTransactionQuery(queries.friend.isExistRequest, [userId1, userId2]);
+
+      if (requestFollow.length < 1) {
+        return Promise.reject({ code: 326, message: 'follow request is not exist or not friend relationship' });
+      }
+      return {};
+    }),
+    alreadyFriend: param('id')
+      .custom(async (userId2, { req: { verifiedToken: { id: userId1 } } }) => {
+        const { result: friend } = await requestNonTransactionQuery(queries.friend.getStatus, [userId1, userId2, 'Y']);
+
+        if (friend.length) {
+          return Promise.reject({ code: 327, message: 'this user is already friend' });
+        }
+        return {};
+      }),
+  },
 };
