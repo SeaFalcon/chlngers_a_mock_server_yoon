@@ -27,9 +27,9 @@ exports.getFeed = async (req, res) => {
     });
   }
 
-  if (!allChallengeSuccess) return res.status(500).send(`Error: ${allChallengeResult.message}`);
-  if (!currentMeSuccess) return res.status(500).send(`Error: ${currentMeResult.message}`);
-  if (!followSuccess) return res.status(500).send(`Error: ${followResult.message}`);
+  if (!allChallengeSuccess) return res.status(500).send(`allChallengeResult Error: ${allChallengeResult.message}`);
+  if (!currentMeSuccess) return res.status(500).send(`currentMeResult Error: ${currentMeResult.message}`);
+  if (!followSuccess) return res.status(500).send(`followResult Error: ${followResult.message}`);
 };
 
 exports.getMoreAllChallenges = async (req, res) => {
@@ -53,7 +53,7 @@ exports.getMoreAllChallenges = async (req, res) => {
     });
   }
 
-  if (!allChallengeSuccess) return res.status(500).send(`Error: ${allChallengeResult.message}`);
+  if (!allChallengeSuccess) return res.status(500).send(`allChallengeResult Error: ${allChallengeResult.message}`);
 };
 
 // 팔로우 챌린지 더보기 (페이징)
@@ -78,5 +78,5 @@ exports.getMoreFollowChallenges = async (req, res) => {
     });
   }
 
-  if (!followSuccess) return res.status(500).send(`Error: ${followResult.message}`);
+  if (!followSuccess) return res.status(500).send(`followResult Error: ${followResult.message}`);
 };

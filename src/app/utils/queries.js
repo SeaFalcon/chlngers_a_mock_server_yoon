@@ -527,7 +527,7 @@ module.exports = {
       SELECT certificationId, photoUrl
       FROM challengecertification CC
               JOIN challenge C on CC.challengeId = C.challengeId
-      WHERE userId = ?
+      WHERE CC.userId = ?
         AND C.endDay > now()
       LIMIT 15 OFFSET ?;
     `,

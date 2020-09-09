@@ -320,7 +320,7 @@ exports.search = async (req, res) => {
       userId: user.userId,
       nickname: user.nickname,
       name: user.name,
-      profileImageUrl: user.profileImageUrl,
+      profileImageUrl: user.profileImageUrl || '',
       status: userStatus(user.status),
     };
   });

@@ -25,8 +25,8 @@ exports.getFollower = async (req, res) => {
     });
   }
 
-  if (!followerSuccess) return res.status(500).send(`Error: ${followerResult.message}`);
-  if (!recommendSuccess) return res.status(500).send(`Error: ${recommendResult.message}`);
+  if (!followerSuccess) return res.status(500).send(`followerResult Error: ${followerResult.message}`);
+  if (!recommendSuccess) return res.status(500).send(`recommendResult Error: ${recommendResult.message}`);
 };
 
 exports.getFollowing = async (req, res) => {
@@ -52,8 +52,8 @@ exports.getFollowing = async (req, res) => {
     });
   }
 
-  if (!followingSuccess) return res.status(500).send(`Error: ${followingResult.message}`);
-  if (!recommendSuccess) return res.status(500).send(`Error: ${recommendResult.message}`);
+  if (!followingSuccess) return res.status(500).send(`followingResult Error: ${followingResult.message}`);
+  if (!recommendSuccess) return res.status(500).send(`recommendResult Error: ${recommendResult.message}`);
 };
 
 exports.requestFollow = async (req, res) => {
@@ -74,7 +74,7 @@ exports.requestFollow = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${requestFollowResult.message}`);
+  return res.status(500).send(`requestFollowResult Error: ${requestFollowResult.message}`);
 };
 
 exports.acceptFollow = async (req, res) => {
@@ -95,7 +95,7 @@ exports.acceptFollow = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${acceptFollowResult.message}`);
+  return res.status(500).send(`acceptFollowResult Error: ${acceptFollowResult.message}`);
 };
 
 exports.deleteFollow = async (req, res) => {
@@ -116,5 +116,5 @@ exports.deleteFollow = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${deleteFollowResult.message}`);
+  return res.status(500).send(`deleteFollowResult Error: ${deleteFollowResult.message}`);
 };

@@ -56,9 +56,9 @@ exports.getChallenges = async (req, res) => {
 
   if (subjectSuccess && allChallengeSuccess && CumulativeParticipationSuccess) return res.json({ ...challenges, ...CumulativeParticipations[0], ...makeSuccessResponse('탐색페이지 조회 성공') });
 
-  if (!subjectSuccess) return res.status(500).send(`Error: ${subjects.message}`);
-  if (!allChallengeSuccess) return res.status(500).send(`Error: ${allChallenges.message}`);
-  if (!CumulativeParticipationSuccess) return res.status(500).send(`Error: ${CumulativeParticipations.message}`);
+  if (!subjectSuccess) return res.status(500).send(`subjects Error: ${subjects.message}`);
+  if (!allChallengeSuccess) return res.status(500).send(`allChallenges Error: ${allChallenges.message}`);
+  if (!CumulativeParticipationSuccess) return res.status(500).send(`CumulativeParticipations Error: ${CumulativeParticipations.message}`);
 };
 
 exports.getChallengeDetail = async (req, res) => {
@@ -92,10 +92,10 @@ exports.getChallengeDetail = async (req, res) => {
     });
   }
 
-  if (!detailSuccess) return res.status(500).send(`Error: ${detailResult.message}`);
-  if (!certificationSuccess) return res.status(500).send(`Error: ${certificationsResult.message}`);
-  if (!impossibleSuccess) return res.status(500).send(`Error: ${impossiblesResult.message}`);
-  if (!reviewSuccess) return res.status(500).send(`Error: ${reviewsResult.message}`);
+  if (!detailSuccess) return res.status(500).send(`detailResult Error: ${detailResult.message}`);
+  if (!certificationSuccess) return res.status(500).send(`certificationsResult Error: ${certificationsResult.message}`);
+  if (!impossibleSuccess) return res.status(500).send(`impossiblesResult Error: ${impossiblesResult.message}`);
+  if (!reviewSuccess) return res.status(500).send(`reviewsResult Error: ${reviewsResult.message}`);
 };
 
 exports.participateChallenge = async (req, res) => {
@@ -116,7 +116,7 @@ exports.participateChallenge = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${participationResult.message}`);
+  return res.status(500).send(`participationResult Error: ${participationResult.message}`);
 };
 
 exports.getPossibleCertification = async (req, res) => {
@@ -138,7 +138,7 @@ exports.getPossibleCertification = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${possibleCertificationResult.message}`);
+  return res.status(500).send(`possibleCertificationResult Error: ${possibleCertificationResult.message}`);
 };
 
 exports.certificateChallenge = async (req, res) => {
@@ -159,7 +159,7 @@ exports.certificateChallenge = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${certificateResult.message}`);
+  return res.status(500).send(`certificateResult Error: ${certificateResult.message}`);
 };
 
 exports.getChallengesBySubject = async (req, res) => {
@@ -181,7 +181,7 @@ exports.getChallengesBySubject = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${challengeBySubjectResult.message}`);
+  return res.status(500).send(`challengeBySubjectResult Error: ${challengeBySubjectResult.message}`);
 };
 
 exports.getInterestChallenges = async (req, res) => {
@@ -203,7 +203,7 @@ exports.getInterestChallenges = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${interestChallengeResult.message}`);
+  return res.status(500).send(`interestChallengeResult Error: ${interestChallengeResult.message}`);
 };
 
 exports.addInterestChallenge = async (req, res) => {
@@ -224,7 +224,7 @@ exports.addInterestChallenge = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${result.message}`);
+  return res.status(500).send(`result Error: ${result.message}`);
 };
 
 exports.deleteInterestChallenges = async (req, res) => {
@@ -245,7 +245,7 @@ exports.deleteInterestChallenges = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${result.message}`);
+  return res.status(500).send(`result Error: ${result.message}`);
 };
 
 exports.getInterestTags = async (req, res) => {
@@ -267,7 +267,7 @@ exports.getInterestTags = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${interestTagResult.message}`);
+  return res.status(500).send(`interestTagResult Error: ${interestTagResult.message}`);
 };
 
 exports.addInterestTag = async (req, res) => {
@@ -288,7 +288,7 @@ exports.addInterestTag = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${result.message}`);
+  return res.status(500).send(`result Error: ${result.message}`);
 };
 
 exports.deleteInterestTag = async (req, res) => {
@@ -309,7 +309,7 @@ exports.deleteInterestTag = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${result.message}`);
+  return res.status(500).send(`result Error: ${result.message}`);
 };
 
 exports.getOpenPage = async (req, res) => {
@@ -341,10 +341,10 @@ exports.getOpenPage = async (req, res) => {
     });
   }
 
-  if (!interestFieldSuccess) return res.status(500).send(`Error: ${interestFieldResult.message}`);
-  if (!myChallengeSuccess) return res.status(500).send(`Error: ${myChallengeResult.message}`);
-  if (!challengeByTagSuccess) return res.status(500).send(`Error: ${challengeByTagResult.message}`);
-  if (!hashTagSuccess) return res.status(500).send(`Error: ${hashTagResult.message}`);
+  if (!interestFieldSuccess) return res.status(500).send(`interestFieldResult Error: ${interestFieldResult.message}`);
+  if (!myChallengeSuccess) return res.status(500).send(`myChallengeResult Error: ${myChallengeResult.message}`);
+  if (!challengeByTagSuccess) return res.status(500).send(`challengeByTagResult Error: ${challengeByTagResult.message}`);
+  if (!hashTagSuccess) return res.status(500).send(`hashTagResult Error: ${hashTagResult.message}`);
 };
 
 exports.needConditions = async (req, res) => {
@@ -367,9 +367,9 @@ exports.needConditions = async (req, res) => {
     });
   }
 
-  if (!availableDayOfWeekSuccess) return res.status(500).send(`Error: ${availableDayOfWeekResult.message}`);
-  if (!frequencySuccess) return res.status(500).send(`Error: ${frequencyResult.message}`);
-  if (!subjectSuccess) return res.status(500).send(`Error: ${subjectResult.message}`);
+  if (!availableDayOfWeekSuccess) return res.status(500).send(`availableDayOfWeekResult Error: ${availableDayOfWeekResult.message}`);
+  if (!frequencySuccess) return res.status(500).send(`frequencyResult Error: ${frequencyResult.message}`);
+  if (!subjectSuccess) return res.status(500).send(`subjectResult Error: ${subjectResult.message}`);
 };
 
 exports.create = async (req, res) => {
@@ -396,7 +396,7 @@ exports.delete = async (req, res) => {
     });
   }
 
-  return res.status(500).send(`Error: ${deleteChallengeResult.message}`);
+  return res.status(500).send(`deleteChallengeResult Error: ${deleteChallengeResult.message}`);
 };
 
 exports.update = {
@@ -418,7 +418,7 @@ exports.update = {
       });
     }
 
-    return res.status(500).send(`Error: ${updateImageResult.message}`);
+    return res.status(500).send(`updateImageResult Error: ${updateImageResult.message}`);
   },
   title: async (req, res) => {
     const { params: { challengeId }, body: { title: challengeTitle } } = req;
@@ -438,7 +438,7 @@ exports.update = {
       });
     }
 
-    return res.status(500).send(`Error: ${updateTitleResult.message}`);
+    return res.status(500).send(`updateTitleResult Error: ${updateTitleResult.message}`);
   },
   hashtag: async (req, res) => {
     const { params: { challengeId }, body: { hashTag } } = req;
@@ -490,7 +490,7 @@ exports.update = {
       });
     }
 
-    return res.status(500).send(`Error: ${exampleResult.message}`);
+    return res.status(500).send(`exampleResult Error: ${exampleResult.message}`);
   },
   introduction: async (req, res) => {
     const { params: { challengeId }, body: { introduction: challengeIntroduction } } = req;
@@ -510,7 +510,7 @@ exports.update = {
       });
     }
 
-    return res.status(500).send(`Error: ${updateIntroductionResult.message}`);
+    return res.status(500).send(`updateIntroductionResult Error: ${updateIntroductionResult.message}`);
   },
 };
 

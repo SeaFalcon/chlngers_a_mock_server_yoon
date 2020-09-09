@@ -189,7 +189,7 @@ module.exports = {
         const { result: challenge } = await requestNonTransactionQuery(queries.challenge.isExistChallenge, [challengeId]);
 
         if (challenge.length < 1) {
-          return Promise.reject({ code: 317, message: 'challenge is not exist' });
+          return Promise.reject({ code: 337, message: 'challenge is not exist' });
         }
         return {};
       }),
