@@ -37,6 +37,7 @@ module.exports = (app) => {
     '/challenge/:challengeId/certification',
     jwtMiddleware,
     validation.challengeValidation.check.id,
+    validation.certification.photo,
     challenge.certificateChallenge,
   );
 
@@ -56,6 +57,7 @@ module.exports = (app) => {
   app.post(
     '/user/interest-challenge/:challengeId',
     jwtMiddleware,
+    validation.userValidation.interestChallenge.status,
     validation.challengeValidation.check.id,
     validation.userValidation.interestChallenge.exist,
     challenge.addInterestChallenge,
@@ -77,6 +79,7 @@ module.exports = (app) => {
   app.post(
     '/user/interest-tag/:tagId',
     jwtMiddleware,
+    validation.userValidation.interestChallenge.status,
     validation.userValidation.interestField.checkId,
     validation.userValidation.interestField.exist,
     challenge.addInterestTag,
@@ -107,6 +110,7 @@ module.exports = (app) => {
   app.post(
     '/challenge',
     jwtMiddleware,
+    validation.challengeValidation.create,
     challenge.create,
   );
 
@@ -165,6 +169,9 @@ module.exports = (app) => {
   app.post(
     '/challenge/:challengeId/review',
     jwtMiddleware,
+    validation.challengeValidation.check.id,
+    validation.certification.content,
+    validation.certification.score,
     challenge.createReview,
   );
 
@@ -172,6 +179,8 @@ module.exports = (app) => {
   app.post(
     '/certification/:certificationId/like',
     jwtMiddleware,
+    validation.certification.exist,
+    validation.certification.like.exist,
     challenge.likeCertification,
   );
 
@@ -179,20 +188,36 @@ module.exports = (app) => {
   app.delete(
     '/certification/:certificationId/like',
     jwtMiddleware,
+    validation.certification.exist,
+    validation.certification.like.notExist,
     challenge.cancelLikeCertification,
   );
 
-  // 인증의 댓글
+  // 인증의 댓글 작성
   app.post(
     '/certification/:certificationId/comment',
     jwtMiddleware,
+    validation.certification.exist,
+    validation.certification.comment.content,
+    validation.certification.comment.parentId,
     challenge.createCertificationComment,
   );
 
   // 인증 댓글 삭제
   app.delete(
-    '/certification/:certificationId/comment',
+    '/certification/:certificationId/comment/:commentId',
     jwtMiddleware,
+    validation.certification.exist,
+    validation.certification.comment.exist,
     challenge.deleteCertificationComment,
+  );
+
+  // 인증 삭제
+  app.delete(
+    '/certification/:certificationId',
+    jwtMiddleware,
+    validation.certification.exist,
+    validation.certification.removePossible,
+    challenge.deleteCertification,
   );
 };

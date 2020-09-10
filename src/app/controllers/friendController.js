@@ -1,6 +1,7 @@
+/* eslint-disable no-nested-ternary */
 const { getValidationResult, makeSuccessResponse } = require('../utils/function');
 
-const { requestNonTransactionQuery, requestTransactionQuery } = require('../../../config/database');
+const { requestNonTransactionQuery } = require('../../../config/database');
 
 const queries = require('../utils/queries');
 
@@ -57,20 +58,28 @@ exports.getFollowing = async (req, res) => {
 };
 
 exports.requestFollow = async (req, res) => {
-  const { verifiedToken: { id: userId1 }, params: { id: userId2 } } = req;
+  const { verifiedToken: { id: userId1 }, params: { id: userId2 }, body: { status } } = req;
 
   const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
 
-  const { friend: { requestFollow } } = queries;
+  const { friend: { requestFollow, acceptFollow, deleteFollow } } = queries;
 
-  const { isSuccess: requestFollowSuccess, result: requestFollowResult } = await requestTransactionQuery(requestFollow, [userId1, userId2]);
+  const { isSuccess: requestFollowSuccess, result: requestFollowResult } = status === 'request'
+    ? await requestNonTransactionQuery(requestFollow, [userId1, userId2])
+    : status === 'accept'
+      ? await requestNonTransactionQuery(acceptFollow, [userId2, userId1])
+      : await requestNonTransactionQuery(deleteFollow, [userId1, userId2]);
 
   if (requestFollowSuccess) {
     return res.json({
-      ...makeSuccessResponse('팔로우 요청 성공'),
+      ...makeSuccessResponse(status === 'request'
+        ? '팔로우 요청 성공'
+        : status === 'accept'
+          ? '팔로우 요청 수락 성공'
+          : '팔로우 거절 / 삭제 성공'),
     });
   }
 
@@ -87,7 +96,7 @@ exports.acceptFollow = async (req, res) => {
 
   const { friend: { acceptFollow } } = queries;
 
-  const { isSuccess: acceptFollowSuccess, result: acceptFollowResult } = await requestTransactionQuery(acceptFollow, [userId1, userId2]);
+  const { isSuccess: acceptFollowSuccess, result: acceptFollowResult } = await requestNonTransactionQuery(acceptFollow, [userId1, userId2]);
 
   if (acceptFollowSuccess) {
     return res.json({
@@ -108,7 +117,7 @@ exports.deleteFollow = async (req, res) => {
 
   const { friend: { deleteFollow } } = queries;
 
-  const { isSuccess: deleteFollowSuccess, result: deleteFollowResult } = await requestTransactionQuery(deleteFollow, [userId1, userId2]);
+  const { isSuccess: deleteFollowSuccess, result: deleteFollowResult } = await requestNonTransactionQuery(deleteFollow, [userId1, userId2]);
 
   if (deleteFollowSuccess) {
     return res.json({

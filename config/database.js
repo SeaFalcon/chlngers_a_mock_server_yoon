@@ -101,7 +101,6 @@ async function transaction(...args) {
     connection.release();
     return 'success';
   } catch (error) {
-    console.log(error);
     await connection.rollback();
     connection.release();
     return 'fail';

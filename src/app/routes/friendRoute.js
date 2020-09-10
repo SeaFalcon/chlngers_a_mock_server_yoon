@@ -25,6 +25,7 @@ module.exports = (app) => {
   app.post(
     '/user/:id/follow',
     jwtMiddleware,
+    validation.userValidation.interestChallenge.status,
     validation.userValidation.checkId,
     validation.followValidation.requestExist,
     friend.requestFollow,

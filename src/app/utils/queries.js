@@ -374,7 +374,28 @@ module.exports = {
               JOIN frequency F ON C.frequencyId = F.frequencyId
         where CP.userId = ?;
     `,
-    certificate: 'INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);',
+    certification: {
+      insert: 'INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);',
+      isExist: 'SELECT certificationId FROM challengecertification WHERE certificationId = ?',
+      remove: 'DELETE FROM challengecertification WHERE certificationId = ?',
+      isRemovePossible: `
+        SELECT endDay > now() as removePossible
+        FROM challengecertification cc
+                JOIN challenge c on cc.challengeId = c.challengeId
+        WHERE certificationId = ?;
+      `,
+      isExistLike: 'SELECT * FROM challengecertificationlike WHERE certificationId = ? AND userId = ?',
+      like: 'INSERT INTO challengecertificationlike (certificationId, userId) VALUES (?, ?);',
+      cancelLike: 'DELETE FROM challengecertificationlike WHERE certificationId = ? AND userId = ?;',
+      comment: {
+        insert: 'INSERT INTO challengecertificationcomment (content, parentId, certificationId, userId) VALUES (?, ?, ?, ?);',
+        remove: 'DELETE FROM challengecertificationcomment WHERE certificationCommentId = ?;',
+        isExist: 'SELECT * FROM challengecertificationcomment WHERE certificationCommentId = ?;',
+      },
+    },
+    review: {
+      insert: 'INSERT INTO challengereview (challengeId, userId, content, score) VALUES (?, ?, ?, ?);',
+    },
     isExistSubject: 'SELECT subjectId FROM subject WHERE subjectId = ?',
     challengeBySubjectId: 'SELECT * FROM challenge WHERE subjectId = ?',
     isExistHashTag: 'SELECT tagId FROM hashtag WHERE tagid = ?',
@@ -462,6 +483,15 @@ module.exports = {
       hashtag: 'SELECT tagId FROM hashtag WHERE tagName = ?',
     },
     insert: {
+      item: `
+        INSERT INTO challenge (title, certificationMethod, certificationInterval, certificationCountPerDay, certificationMeans,
+                              startDay, endDay, startTime, endTime, minFee, maxFee, participationCode, ImageUrl, introduction,
+                              goodPhotoUrl, badPhotoUrl, frequencyId, subjectId, official, caution, week, userId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `,
+      challengesubject: 'INSERT INTO challengesubject (challengeId, subjectId) VALUES (?, ?);',
+      challengefrequency: 'INSERT INTO challengefrequency (challengeId, frequency) VALUES (?, ?);',
+      challengeavailabledayofweek: 'INSERT INTO challengeavailabledayofweek (challengeId, dayOfWeek) VALUES (?, ?);',
       hashtag: 'INSERT INTO hashtag (tagName) VALUES (?);',
       challengetag: 'INSERT INTO challengetag (challengeId, tagId) VALUES (?, ?);',
     },
@@ -474,6 +504,8 @@ module.exports = {
     delete: {
       hashtag: 'DELETE FROM challengetag WHERE challengeId = ?',
       challenge: 'DELETE FROM challenge WHERE challengeId = ?',
+      challengeavailabledayofweek: 'DELETE FROM challengeavailabledayofweek WHERE challengeId = ?',
+      challengetag: 'DELETE FROM challengetag WHERE challengeId = ?',
     },
   },
   friend: {

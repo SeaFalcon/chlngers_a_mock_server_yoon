@@ -1,4 +1,4 @@
-const { requestNonTransactionQuery, requestTransactionQuery, transaction } = require('../../../config/database');
+const { requestNonTransactionQuery, transaction } = require('../../../config/database');
 
 const queries = require('../utils/queries');
 
@@ -108,7 +108,7 @@ exports.participateChallenge = async (req, res) => {
 
   const { challenge: { participate } } = queries;
 
-  const { isSuccess: participationSuccess, result: participationResult } = await requestTransactionQuery(participate, [challengeId, id, money]);
+  const { isSuccess: participationSuccess, result: participationResult } = await requestNonTransactionQuery(participate, [challengeId, id, money]);
 
   if (participationSuccess) {
     return res.json({
@@ -129,7 +129,7 @@ exports.getPossibleCertification = async (req, res) => {
 
   const { challenge: { possibleCertification } } = queries;
 
-  const { isSuccess: possibleCertificationSuccess, result: possibleCertificationResult } = await requestTransactionQuery(possibleCertification, [id, id]);
+  const { isSuccess: possibleCertificationSuccess, result: possibleCertificationResult } = await requestNonTransactionQuery(possibleCertification, [id, id]);
 
   if (possibleCertificationSuccess) {
     return res.json({
@@ -149,9 +149,9 @@ exports.certificateChallenge = async (req, res) => {
     return res.status(400).json(errors);
   }
 
-  const { challenge: { certificate } } = queries;
+  const { challenge: { certification: { insert } } } = queries;
 
-  const { isSuccess: certificateSuccess, result: certificateResult } = await requestTransactionQuery(certificate, [id, challengeId, photoUrl, (content || '')]);
+  const { isSuccess: certificateSuccess, result: certificateResult } = await requestNonTransactionQuery(insert, [id, challengeId, photoUrl, (content || '')]);
 
   if (certificateSuccess) {
     return res.json({
@@ -172,7 +172,7 @@ exports.getChallengesBySubject = async (req, res) => {
 
   const { challenge: { challengeBySubjectId } } = queries;
 
-  const { isSuccess: challengeBySubjectSuccess, result: challengeBySubjectResult } = await requestTransactionQuery(challengeBySubjectId, [subjectId]);
+  const { isSuccess: challengeBySubjectSuccess, result: challengeBySubjectResult } = await requestNonTransactionQuery(challengeBySubjectId, [subjectId]);
 
   if (challengeBySubjectSuccess) {
     return res.json({
@@ -207,20 +207,22 @@ exports.getInterestChallenges = async (req, res) => {
 };
 
 exports.addInterestChallenge = async (req, res) => {
-  const { verifiedToken: { id }, params: { challengeId } } = req;
+  const { verifiedToken: { id }, params: { challengeId }, body: { status } } = req;
 
   const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
 
-  const { user: { interestChallenge: { add } } } = queries;
+  const { user: { interestChallenge: { add, delete: remove } } } = queries;
 
-  const { isSuccess, result } = await requestNonTransactionQuery(add, [id, challengeId]);
+  const { isSuccess, result } = status
+    ? await requestNonTransactionQuery(add, [id, challengeId])
+    : await requestNonTransactionQuery(remove, [id, challengeId]);
 
   if (isSuccess) {
     return res.json({
-      ...makeSuccessResponse('관심 챌린지 추가 성공'),
+      ...makeSuccessResponse(status ? '관심 챌린지 추가 성공' : '관심 챌린지 제거 성공'),
     });
   }
 
@@ -271,20 +273,22 @@ exports.getInterestTags = async (req, res) => {
 };
 
 exports.addInterestTag = async (req, res) => {
-  const { verifiedToken: { id }, params: { tagId } } = req;
+  const { verifiedToken: { id }, params: { tagId }, body: { status } } = req;
 
   const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
 
-  const { user: { interestField: { add } } } = queries;
+  const { user: { interestField: { add, delete: remove } } } = queries;
 
-  const { isSuccess, result } = await requestNonTransactionQuery(add, [id, tagId]);
+  const { isSuccess, result } = status
+    ? await requestNonTransactionQuery(add, [id, tagId])
+    : await requestNonTransactionQuery(remove, [id, tagId]);
 
   if (isSuccess) {
     return res.json({
-      ...makeSuccessResponse('관심분야 팔로우 성공'),
+      ...makeSuccessResponse(status ? '관심분야 팔로우 성공' : '관심분야 언팔로우 성공'),
     });
   }
 
@@ -373,7 +377,54 @@ exports.needConditions = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
+  const {
+    body,
+    // body: {      title, certificationInterval, certificationMethod, certificationCountPerDay, certificationMeans, startDay, endDay, startTime, endTime, minFee, maxFee, participationCode, ImageUrl, introduction, goodPhotoUrl, badPhotoUrl, frequencyId, subjectId, official, caution, week, userId    },
+    body: {
+      availableDayOfWeeks, hashTag,
+    },
+  } = req;
 
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const {
+    challenge: {
+      insert: {
+        item, challengeavailabledayofweek, hashtag: insertHashTag, challengetag: insertChallengeTag,
+      }, select: { hashtag: selectHashTag },
+    },
+  } = queries;
+
+  const result = transaction(async () => {
+    const { result: { insertId: challengeId } } = await requestNonTransactionQuery(item, [...Object.values(body)]);
+
+    availableDayOfWeeks.forEach(async (dayofweek) => {
+      await requestNonTransactionQuery(challengeavailabledayofweek, [challengeId, dayofweek]);
+    });
+
+    hashTag.forEach(async (tag) => {
+      const { result: hashTagResult } = await requestNonTransactionQuery(selectHashTag, [tag]);
+      if (!hashTagResult[0]) {
+        const { result: { insertId: hashTagId } } = await requestNonTransactionQuery(insertHashTag, [tag]);
+        await requestNonTransactionQuery(insertChallengeTag, [challengeId, hashTagId]);
+      } else {
+        await requestNonTransactionQuery(insertChallengeTag, [challengeId, hashTagResult[0].tagId]);
+      }
+    });
+  });
+
+  const transactionResult = await result;
+
+  if (transactionResult === 'success') {
+    return res.json({
+      ...makeSuccessResponse('챌린지 개설 성공'),
+    });
+  }
+
+  return res.status(500).send('Error: challenge insert Transaction Failed');
 };
 
 exports.delete = async (req, res) => {
@@ -384,19 +435,23 @@ exports.delete = async (req, res) => {
     return res.status(400).json(errors);
   }
 
-  const { challenge: { delete: { challenge: deleteChallenge } } } = queries;
+  const { challenge: { delete: { challenge: deleteChallenge, challengeavailabledayofweek, challengetag } } } = queries;
 
-  const { isSuccess: deleteChallengeSuccess, result: deleteChallengeResult } = await requestTransactionQuery(deleteChallenge, [challengeId]);
+  const result = transaction(async () => {
+    await requestNonTransactionQuery(deleteChallenge, [challengeId]);
+    await requestNonTransactionQuery(challengeavailabledayofweek, [challengeId]);
+    await requestNonTransactionQuery(challengetag, [challengeId]);
+  });
 
-  console.log(deleteChallenge);
+  const transactionResult = await result;
 
-  if (deleteChallengeSuccess) {
+  if (transactionResult === 'success') {
     return res.json({
       ...makeSuccessResponse('챌린지 삭제 성공'),
     });
   }
 
-  return res.status(500).send(`deleteChallengeResult Error: ${deleteChallengeResult.message}`);
+  return res.status(500).send('delete challenge transaction error');
 };
 
 exports.update = {
@@ -410,7 +465,7 @@ exports.update = {
 
     const { challenge: { update: { image } } } = queries;
 
-    const { isSuccess: updateImageSuccess, result: updateImageResult } = await requestTransactionQuery(image, [imageUrl, challengeId]);
+    const { isSuccess: updateImageSuccess, result: updateImageResult } = await requestNonTransactionQuery(image, [imageUrl, challengeId]);
 
     if (updateImageSuccess) {
       return res.json({
@@ -430,7 +485,7 @@ exports.update = {
 
     const { challenge: { update: { title } } } = queries;
 
-    const { isSuccess: updateTitleSuccess, result: updateTitleResult } = await requestTransactionQuery(title, [challengeTitle, challengeId]);
+    const { isSuccess: updateTitleSuccess, result: updateTitleResult } = await requestNonTransactionQuery(title, [challengeTitle, challengeId]);
 
     if (updateTitleSuccess) {
       return res.json({
@@ -450,27 +505,29 @@ exports.update = {
 
     const { challenge: { select: { hashtag: selectHashTag }, insert: { hashtag: insertHashTag, challengetag: insertChallengeTag }, delete: { hashtag: deleteHashTag } } } = queries;
 
-    const transactionResult = transaction(async () => {
-      await requestTransactionQuery(deleteHashTag, [challengeId]);
+    const result = transaction(async () => {
+      await requestNonTransactionQuery(deleteHashTag, [challengeId]);
 
       hashTag.forEach(async (tag) => {
         const { result: hashTagResult } = await requestNonTransactionQuery(selectHashTag, [tag]);
         if (!hashTagResult[0]) {
-          const { result: { insertId } } = await requestTransactionQuery(insertHashTag, [tag]);
-          await requestTransactionQuery(insertChallengeTag, [challengeId, insertId]);
+          const { result: { insertId } } = await requestNonTransactionQuery(insertHashTag, [tag]);
+          await requestNonTransactionQuery(insertChallengeTag, [challengeId, insertId]);
         } else {
-          await requestTransactionQuery(insertChallengeTag, [challengeId, hashTagResult[0].tagId]);
+          await requestNonTransactionQuery(insertChallengeTag, [challengeId, hashTagResult[0].tagId]);
         }
       });
     });
 
-    if (transactionResult) {
+    const transactionResult = await result;
+
+    if (transactionResult === 'success') {
       return res.json({
         ...makeSuccessResponse('챌린지 태그 수정 성공'),
       });
     }
 
-    return res.status(500).send('Error: Transaction Failed');
+    return res.status(500).send('Error: challenge update tag Transaction Failed');
   },
   example: async (req, res) => {
     const { params: { challengeId }, body: { goodPhotoUrl, badPhotoUrl } } = req;
@@ -482,7 +539,7 @@ exports.update = {
 
     const { challenge: { update: { example } } } = queries;
 
-    const { isSuccess: exampleSuccess, result: exampleResult } = await requestTransactionQuery(example, [goodPhotoUrl, badPhotoUrl, challengeId]);
+    const { isSuccess: exampleSuccess, result: exampleResult } = await requestNonTransactionQuery(example, [goodPhotoUrl, badPhotoUrl, challengeId]);
 
     if (exampleSuccess) {
       return res.json({
@@ -502,7 +559,7 @@ exports.update = {
 
     const { challenge: { update: { introduction } } } = queries;
 
-    const { isSuccess: updateIntroductionSuccess, result: updateIntroductionResult } = await requestTransactionQuery(introduction, [challengeIntroduction, challengeId]);
+    const { isSuccess: updateIntroductionSuccess, result: updateIntroductionResult } = await requestNonTransactionQuery(introduction, [challengeIntroduction, challengeId]);
 
     if (updateIntroductionSuccess) {
       return res.json({
@@ -515,21 +572,127 @@ exports.update = {
 };
 
 exports.createReview = async (req, res) => {
+  const { verifiedToken: { id }, params: { challengeId }, body: { content, score } } = req;
 
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { challenge: { review: { insert } } } = queries;
+
+  const { isSuccess: insertReviewSuccess, result: insertReviewResult } = await requestNonTransactionQuery(insert, [challengeId, id, content, score]);
+
+  if (insertReviewSuccess) {
+    return res.json({
+      ...makeSuccessResponse('챌린지 리뷰 작성 성공'),
+    });
+  }
+
+  return res.status(500).send(`insertReviewResult Error: ${insertReviewResult.message}`);
 };
 
 exports.likeCertification = async (req, res) => {
+  const { verifiedToken: { id }, params: { certificationId } } = req;
 
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { challenge: { certification: { like } } } = queries;
+
+  const { isSuccess: likeCertificationSuccess, result: likeCertificationResult } = await requestNonTransactionQuery(like, [certificationId, id]);
+
+  if (likeCertificationSuccess) {
+    return res.json({
+      ...makeSuccessResponse('인증 좋아요 성공'),
+    });
+  }
+
+  return res.status(500).send(`likeCertificationResult Error: ${likeCertificationResult.message}`);
 };
 
 exports.cancelLikeCertification = async (req, res) => {
+  const { verifiedToken: { id }, params: { certificationId } } = req;
 
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { challenge: { certification: { cancelLike } } } = queries;
+
+  const { isSuccess: cancelLikeCertificationSuccess, result: cancelLikeCertificationResult } = await requestNonTransactionQuery(cancelLike, [certificationId, id]);
+
+  if (cancelLikeCertificationSuccess) {
+    return res.json({
+      ...makeSuccessResponse('인증 좋아요 취소 성공'),
+    });
+  }
+
+  return res.status(500).send(`cancelLikeCertificationResult Error: ${cancelLikeCertificationResult.message}`);
 };
 
 exports.createCertificationComment = async (req, res) => {
+  const { verifiedToken: { id }, params: { certificationId }, body: { content, parentId } } = req;
 
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { challenge: { certification: { comment: { insert } } } } = queries;
+
+  const { isSuccess: createCommentSuccess, result: createCommentResult } = await requestNonTransactionQuery(insert, [content, parentId, certificationId, id]);
+
+  if (createCommentSuccess) {
+    return res.json({
+      ...makeSuccessResponse('인증 댓글 작성 성공'),
+    });
+  }
+
+  return res.status(500).send(`createCommentResult Error: ${createCommentResult.message}`);
 };
 
 exports.deleteCertificationComment = async (req, res) => {
+  const { params: { commentId } } = req;
 
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { challenge: { certification: { comment: { remove } } } } = queries;
+
+  const { isSuccess: deleteCommentSuccess, result: deleteCommentResult } = await requestNonTransactionQuery(remove, [commentId]);
+
+  if (deleteCommentSuccess) {
+    return res.json({
+      ...makeSuccessResponse('인증 댓글 삭제 성공'),
+    });
+  }
+
+  return res.status(500).send(`deleteCommentResult Error: ${deleteCommentResult.message}`);
+};
+
+exports.deleteCertification = async (req, res) => {
+  const { params: { certificationId } } = req;
+
+  const errors = getValidationResult(req);
+  if (!errors.success) {
+    return res.status(400).json(errors);
+  }
+
+  const { challenge: { certification: { remove } } } = queries;
+
+  const { isSuccess: deleteCertificationSuccess, result: deleteCertificationResult } = await requestNonTransactionQuery(remove, [certificationId]);
+
+  if (deleteCertificationSuccess) {
+    return res.json({
+      ...makeSuccessResponse('인증 삭제 성공'),
+    });
+  }
+
+  return res.status(500).send(`deleteCertificationResult Error: ${deleteCertificationResult.message}`);
 };

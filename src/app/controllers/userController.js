@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 const request = require('request');
 
-const { requestTransactionQuery, requestNonTransactionQuery } = require('../../../config/database');
+const { requestNonTransactionQuery } = require('../../../config/database');
 
 const {
   makeSuccessResponse, snsInfo, makeLoginResponse, getValidationResult,
@@ -29,7 +29,7 @@ exports.join = async (req, res) => {
 
   const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
 
-  const { isSuccess, result } = await requestTransactionQuery(queries.join.insert, [email, hashedPassword, name, nickname]);
+  const { isSuccess, result } = await requestNonTransactionQuery(queries.join.insert, [email, hashedPassword, name, nickname]);
 
   if (isSuccess) {
     return res.json({
@@ -93,7 +93,7 @@ exports.snsLogin = async (req, res) => {
 
         const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
 
-        const { isSuccess: joinSuccess, result: joinResult } = await requestTransactionQuery(queries.join.insertSNS, [email, hashedPassword, nickname, nickname, profileImageUrl, password]);
+        const { isSuccess: joinSuccess, result: joinResult } = await requestNonTransactionQuery(queries.join.insertSNS, [email, hashedPassword, nickname, nickname, profileImageUrl, password]);
 
         if (joinSuccess) {
           const { insertId } = joinResult[0];
@@ -191,7 +191,7 @@ exports.update = {
       return res.status(400).json(errors);
     }
 
-    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.nickname, [nickname, userId]);
+    const { isSuccess, result } = await requestNonTransactionQuery(queries.update.user.nickname, [nickname, userId]);
 
     if (isSuccess) {
       return res.json({
@@ -204,7 +204,7 @@ exports.update = {
   introduction: async (req, res) => {
     const { verifiedToken: { id: userId }, body: { introduction } } = req;
 
-    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.introduction, [introduction, userId]);
+    const { isSuccess, result } = await requestNonTransactionQuery(queries.update.user.introduction, [introduction, userId]);
 
     if (isSuccess) {
       return res.json({
@@ -222,7 +222,7 @@ exports.update = {
       return res.status(400).json(errors);
     }
 
-    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
+    const { isSuccess, result } = await requestNonTransactionQuery(queries.update.user.profileImageUrl, [profileImageUrl, userId]);
 
     if (isSuccess) {
       return res.json({
@@ -242,7 +242,7 @@ exports.update = {
 
     const hashedPassword = await crypto.createHash('sha512').update(password).digest('hex');
 
-    const { isSuccess, result } = await requestTransactionQuery(queries.update.user.password, [hashedPassword, userId]);
+    const { isSuccess, result } = await requestNonTransactionQuery(queries.update.user.password, [hashedPassword, userId]);
 
     if (isSuccess) {
       return res.json({
@@ -257,7 +257,7 @@ exports.update = {
 exports.delete = async (req, res) => {
   const { verifiedToken: { id: userId } } = req;
 
-  const { isSuccess, result } = await requestTransactionQuery(queries.delete.user, ['Y', userId]);
+  const { isSuccess, result } = await requestNonTransactionQuery(queries.delete.user, ['Y', userId]);
 
   if (isSuccess) {
     return res.json({
