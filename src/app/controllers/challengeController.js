@@ -593,20 +593,22 @@ exports.createReview = async (req, res) => {
 };
 
 exports.likeCertification = async (req, res) => {
-  const { verifiedToken: { id }, params: { certificationId } } = req;
+  const { verifiedToken: { id }, params: { certificationId }, body: { status } } = req;
 
   const errors = getValidationResult(req);
   if (!errors.success) {
     return res.status(400).json(errors);
   }
 
-  const { challenge: { certification: { like } } } = queries;
+  const { challenge: { certification: { like, cancelLike } } } = queries;
 
-  const { isSuccess: likeCertificationSuccess, result: likeCertificationResult } = await requestNonTransactionQuery(like, [certificationId, id]);
+  const { isSuccess: likeCertificationSuccess, result: likeCertificationResult } = status
+    ? await requestNonTransactionQuery(like, [certificationId, id])
+    : await requestNonTransactionQuery(cancelLike, [certificationId, id]);
 
   if (likeCertificationSuccess) {
     return res.json({
-      ...makeSuccessResponse('인증 좋아요 성공'),
+      ...makeSuccessResponse(status ? '인증 좋아요 성공' : '인증 좋아요 취소 성공'),
     });
   }
 

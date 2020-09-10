@@ -379,26 +379,40 @@ module.exports = {
       }
       return {};
     }),
-    content: body('content')
-      .isString()
-      .withMessage({ code: 340, message: 'review content must be string.' }),
-    score: body('score')
-      .isNumeric()
-      .withMessage({ code: 341, message: 'review score must be numeric' }),
-    like: {
-      exist: param('certificationId').custom(async (certificationId, { req: { verifiedToken: { id } } }) => {
-        const { result: like } = await requestNonTransactionQuery(queries.challenge.certification.isExistLike, [certificationId, id]);
+    review: {
+      exist: param('challengeId').custom(async (challengeId, { req: { verifiedToken: { id } } }) => {
+        const { result: like } = await requestNonTransactionQuery(queries.challenge.review.isExist, [challengeId, id]);
 
         if (like.length) {
-          return Promise.reject({ code: 342, message: 'you already like this certification' });
+          return Promise.reject({ code: 374, message: 'you already write review' });
         }
         return {};
       }),
-      notExist: param('certificationId').custom(async (certificationId, { req: { verifiedToken: { id } } }) => {
-        const { result: like } = await requestNonTransactionQuery(queries.challenge.certification.isExistLike, [certificationId, id]);
+      content: body('content')
+        .isString()
+        .withMessage({ code: 340, message: 'review content must be string.' }),
+      score: body('score')
+        .isNumeric()
+        .withMessage({ code: 341, message: 'review score must be numeric' }),
+    },
+    like: {
+      exist: param('certificationId').custom(async (certificationId, { req: { body: { status }, verifiedToken: { id } } }) => {
+        if (status) {
+          const { result: like } = await requestNonTransactionQuery(queries.challenge.certification.isExistLike, [certificationId, id]);
 
-        if (like.length < 1) {
-          return Promise.reject({ code: 343, message: 'no like information this certification' });
+          if (like.length) {
+            return Promise.reject({ code: 342, message: 'you already like this certification' });
+          }
+        }
+        return {};
+      }),
+      notExist: param('certificationId').custom(async (certificationId, { req: { body: { status }, verifiedToken: { id } } }) => {
+        if (!status) {
+          const { result: like } = await requestNonTransactionQuery(queries.challenge.certification.isExistLike, [certificationId, id]);
+
+          if (like.length < 1) {
+            return Promise.reject({ code: 343, message: 'no like information this certification' });
+          }
         }
         return {};
       }),

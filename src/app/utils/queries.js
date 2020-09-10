@@ -395,6 +395,7 @@ module.exports = {
     },
     review: {
       insert: 'INSERT INTO challengereview (challengeId, userId, content, score) VALUES (?, ?, ?, ?);',
+      isExist: 'SELECT * FROM challengereview WHERE challengeId = ? AND userId = ?',
     },
     isExistSubject: 'SELECT subjectId FROM subject WHERE subjectId = ?',
     challengeBySubjectId: 'SELECT * FROM challenge WHERE subjectId = ?',

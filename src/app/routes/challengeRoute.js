@@ -170,8 +170,9 @@ module.exports = (app) => {
     '/challenge/:challengeId/review',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    validation.certification.content,
-    validation.certification.score,
+    validation.certification.review.content,
+    validation.certification.review.score,
+    validation.certification.review.exist,
     challenge.createReview,
   );
 
@@ -179,8 +180,10 @@ module.exports = (app) => {
   app.post(
     '/certification/:certificationId/like',
     jwtMiddleware,
+    validation.userValidation.interestChallenge.status,
     validation.certification.exist,
     validation.certification.like.exist,
+    validation.certification.like.notExist,
     challenge.likeCertification,
   );
 
