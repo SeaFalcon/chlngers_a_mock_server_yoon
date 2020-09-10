@@ -320,9 +320,19 @@ module.exports = {
         return {};
       }),
     },
-    participate: body('money')
-      .notEmpty()
-      .withMessage({ code: 318, message: 'money value is empty' }),
+    participate: {
+      money: body('money')
+        .notEmpty()
+        .withMessage({ code: 318, message: 'money value is empty' }),
+      isExist: param('challengeId').custom(async (challengeId, { req: { verifiedToken: { id } } }) => {
+        const { result } = await requestNonTransactionQuery(queries.challenge.isExistParticipant, [challengeId, id]);
+
+        if (result.length) {
+          return Promise.reject({ code: 376, message: 'you already participate this challenge.' });
+        }
+        return {};
+      }),
+    },
     update: {
       image: body('image')
         .isURL()
@@ -362,6 +372,14 @@ module.exports = {
     photo: body('photoUrl')
       .isURL()
       .withMessage({ code: 319, message: 'photoUrl is not Valid' }),
+    existUser: param('challengeId').custom(async (challengeId, { req: { verifiedToken: { id } } }) => {
+      const { result } = await requestNonTransactionQuery(queries.challenge.certification.isExistUser, [challengeId, id]);
+
+      if (result.length) {
+        return Promise.reject({ code: 377, message: 'you already certificate today' });
+      }
+      return {};
+    }),
     exist: param('certificationId').custom(async (certificationId) => {
       const { result: requestFollow } = await requestNonTransactionQuery(queries.challenge.certification.isExist, [certificationId]);
 
@@ -375,7 +393,7 @@ module.exports = {
 
       if (result.length) {
         const { removePossible } = result[0];
-        if (!removePossible) { return Promise.reject({ code: 339, message: 'challenges that have ended cannot be deleted.' }); }
+        if (!removePossible) { return Promise.reject({ code: 375, message: 'challenges that have ended cannot be deleted.' }); }
       }
       return {};
     }),

@@ -333,6 +333,7 @@ module.exports = {
   challenge: {
     isExistChallenge: 'SELECT challengeId FROM challenge WHERE challengeId = ?;',
     participate: 'INSERT INTO challengeparticipant (challengeId, userId, money) VALUES (?, ?, ?);',
+    isExistParticipant: 'SELECT * FROM challengeparticipant WHERE challengeId = ? AND userId = ?',
     possibleCertification: `
      select C.challengeId, title, 
             CONCAT(CONCAT(DATE_FORMAT(startDay, '%Y.%m.%d '), CASE DAYOFWEEK(startDay)
@@ -377,6 +378,11 @@ module.exports = {
     certification: {
       insert: 'INSERT INTO challengecertification (userId, challengeId, photoUrl, content) VALUES (?, ?, ?, ?);',
       isExist: 'SELECT certificationId FROM challengecertification WHERE certificationId = ?',
+      isExistUser: `
+          SELECT certificationId 
+          FROM challengecertification 
+          WHERE challengeId = ? AND userId = ? AND DATEDIFF(now(), createdAt) != 0
+      `,
       remove: 'DELETE FROM challengecertification WHERE certificationId = ?',
       isRemovePossible: `
         SELECT endDay > now() as removePossible

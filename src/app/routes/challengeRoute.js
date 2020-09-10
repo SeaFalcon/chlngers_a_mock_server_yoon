@@ -21,7 +21,8 @@ module.exports = (app) => {
     '/challenge/:challengeId/participation',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    validation.challengeValidation.participate,
+    validation.challengeValidation.participate.money,
+    validation.challengeValidation.participate.isExist,
     challenge.participateChallenge,
   );
 
@@ -38,6 +39,7 @@ module.exports = (app) => {
     jwtMiddleware,
     validation.challengeValidation.check.id,
     validation.certification.photo,
+    validation.certification.existUser,
     challenge.certificateChallenge,
   );
 
