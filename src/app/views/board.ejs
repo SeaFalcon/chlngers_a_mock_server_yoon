@@ -7,20 +7,82 @@
 </head>
 
 <body>
+  <div id="loginForm">
+    <p>
+      email: <input type="email" name="email" id="email">
+    </p>
+    <p>
+      password: <input type="password" name="password" id="password">
+    </p>
+    <button type="button" onclick="login()">로그인</button>
+  </div>
+
   <!-- <form action="/upload/image" method="post" enctype="multipart/form-data"> -->
+  <div id="loginSuccess">
+    <div id="userForm">
+
+    </div>
+
+    <button type="button" onclick="logout()">로그아웃</button>
+
+    <h3>프로필 이미지 수정</h3>
     <p>
       <input type="file" name="image">
     </p>
     <input type="submit" value="파일 업로드하기" onclick="uploadImage(event)">
+  </div>
   <!-- </form> -->
 
   <script>
-    fetch('http://dev.falconsea.shop/challenges', {
-      method: 'GET',
-      headers: {
-        'x-access-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ5b29uQGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoieW9vbnlvb24iLCJwcm9maWxlSW1hZ2VVcmwiOiJodHRwczovL2Nkbi5ub3cuaG93c3R1ZmZ3b3Jrcy5jb20vbWVkaWEtY29udGVudC8wYjdmNGU5Yi1mNTljLTQwMjQtOWYwNi1iM2RjMTI4NTBhYjctMTkyMC0xMDgwLmpwZyIsImludHJvZHVjdGlvbiI6ImhleSBoZXkgaGV5ISIsInBob25lTnVtYmVyIjoiIiwiaXNEZWxldGVkIjoiTiIsImlhdCI6MTU5OTU4MjY5NCwiZXhwIjoxNjMxMTE4Njk0LCJzdWIiOiJ1c2VySW5mbyJ9.QFnF67IUrKV6XZNzcRm24R8n3mu7CnYkuBLbvtUuJbw'
+    const loginSuccessDiv = document.querySelector('#loginSuccess');
+    loginSuccessDiv.style.display = 'none';
+
+    let accessToken = '';
+    let userInfo;
+
+    async function login() {
+      const email = document.querySelector('#email').value;
+      const password = document.querySelector('#password').value;
+
+      const response = await fetch('https://falconsea.shop/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      })
+
+      const result = await response.json();
+
+      if (result) {
+        userInfo = result.userInfo;
+        accessToken = result.jwt;
+
+        const loginForm = document.querySelector('#loginForm')
+        loginForm.style.display = 'none';
+        loginSuccessDiv.style.display = 'inherit';
+
+        const userForm = document.querySelector('#userForm')
+
+        const p = document.createElement('p');
+        p.innerHTML = `nickname:  <h2 style='display:inline;'>${userInfo.nickname}</h2>`;
+        const img = document.createElement('img');
+        img.setAttribute('src', userInfo.profileImageUrl);
+
+        userForm.appendChild(p);
+        userForm.appendChild(img);
+
+        return alert('로그인 완료!');
       }
-    }).then(async (data) => console.log(await data.json()));
+
+      return alert('로그인 실패, 다시 시도해주세요.')
+    }
+
+    async function logout() {
+      userForm.innerHTML = '';
+      loginForm.style.display = 'inherit';
+      loginSuccessDiv.style.display = 'none';
+    }
 
     async function uploadImage(event) {
       event.preventDefault();
@@ -29,20 +91,41 @@
       console.log(fileField.files)
       formData.append('image', fileField.files[0]);
 
-      const response = await fetch('http://localhost:3000/upload/image', {
+      const response = await fetch('https://falconsea.shop/upload/image', {
         method: 'POST',
         headers: {
-          'x-access-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ5b29uQGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoieW9vbnlvb24iLCJwcm9maWxlSW1hZ2VVcmwiOiJodHRwczovL2Nkbi5ub3cuaG93c3R1ZmZ3b3Jrcy5jb20vbWVkaWEtY29udGVudC8wYjdmNGU5Yi1mNTljLTQwMjQtOWYwNi1iM2RjMTI4NTBhYjctMTkyMC0xMDgwLmpwZyIsImludHJvZHVjdGlvbiI6ImhleSBoZXkgaGV5ISIsInBob25lTnVtYmVyIjoiIiwiaXNEZWxldGVkIjoiTiIsImlhdCI6MTU5OTU4MjY5NCwiZXhwIjoxNjMxMTE4Njk0LCJzdWIiOiJ1c2VySW5mbyJ9.QFnF67IUrKV6XZNzcRm24R8n3mu7CnYkuBLbvtUuJbw'
+          'x-access-token': accessToken,
         },
         body: formData
       })
-      
-      const result = await response.json();
-      
-      if(result){
-        result.fileInfo.location
-      }
 
+      const result = await response.json();
+      console.log(result);
+
+      if (result) {
+        changeProfileImage(result.fileInfo.location);
+      }
+    }
+
+    async function changeProfileImage(imageUrl) {
+      const imgTag = document.querySelector('img');
+      imgTag.setAttribute('src', imageUrl);
+
+      const response = await fetch('https://falconsea.shop/user/image', {
+        method: 'PATCH',
+        headers: {
+          'x-access-token': accessToken,
+          'Content-Type' : 'application/json',
+        },
+        body: JSON.stringify({ profileImageUrl: imageUrl }),
+      })
+
+      const result = await response.json();
+      console.log(result);
+
+      if (result) {
+        alert(result.message);
+      }
     }
 
 

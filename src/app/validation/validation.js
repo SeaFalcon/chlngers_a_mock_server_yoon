@@ -186,8 +186,9 @@ module.exports = {
       },
     }),
     profileImageUrl: body('profileImageUrl')
-      .isURL({})
-      .withMessage({ code: 311, message: 'This url format is not valid.' }),
+      // .isURL({})
+      .notEmpty()
+      .withMessage({ code: 311, message: 'This url is empty.' }),
   },
   challengeValidation: {
     create: checkSchema({
