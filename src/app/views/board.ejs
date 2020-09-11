@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+</head>
+
+<body>
+  <!-- <form action="/upload/image" method="post" enctype="multipart/form-data"> -->
+    <p>
+      <input type="file" name="image">
+    </p>
+    <input type="submit" value="파일 업로드하기" onclick="uploadImage(event)">
+  <!-- </form> -->
+
+  <script>
+    fetch('http://dev.falconsea.shop/challenges', {
+      method: 'GET',
+      headers: {
+        'x-access-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ5b29uQGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoieW9vbnlvb24iLCJwcm9maWxlSW1hZ2VVcmwiOiJodHRwczovL2Nkbi5ub3cuaG93c3R1ZmZ3b3Jrcy5jb20vbWVkaWEtY29udGVudC8wYjdmNGU5Yi1mNTljLTQwMjQtOWYwNi1iM2RjMTI4NTBhYjctMTkyMC0xMDgwLmpwZyIsImludHJvZHVjdGlvbiI6ImhleSBoZXkgaGV5ISIsInBob25lTnVtYmVyIjoiIiwiaXNEZWxldGVkIjoiTiIsImlhdCI6MTU5OTU4MjY5NCwiZXhwIjoxNjMxMTE4Njk0LCJzdWIiOiJ1c2VySW5mbyJ9.QFnF67IUrKV6XZNzcRm24R8n3mu7CnYkuBLbvtUuJbw'
+      }
+    }).then(async (data) => console.log(await data.json()));
+
+    async function uploadImage(event) {
+      event.preventDefault();
+      const formData = new FormData();
+      const fileField = document.querySelector('input[type="file"]');
+      console.log(fileField.files)
+      formData.append('image', fileField.files[0]);
+
+      const response = await fetch('http://localhost:3000/upload/image', {
+        method: 'POST',
+        headers: {
+          'x-access-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ5b29uQGdtYWlsLmNvbSIsIm5pY2tuYW1lIjoieW9vbnlvb24iLCJwcm9maWxlSW1hZ2VVcmwiOiJodHRwczovL2Nkbi5ub3cuaG93c3R1ZmZ3b3Jrcy5jb20vbWVkaWEtY29udGVudC8wYjdmNGU5Yi1mNTljLTQwMjQtOWYwNi1iM2RjMTI4NTBhYjctMTkyMC0xMDgwLmpwZyIsImludHJvZHVjdGlvbiI6ImhleSBoZXkgaGV5ISIsInBob25lTnVtYmVyIjoiIiwiaXNEZWxldGVkIjoiTiIsImlhdCI6MTU5OTU4MjY5NCwiZXhwIjoxNjMxMTE4Njk0LCJzdWIiOiJ1c2VySW5mbyJ9.QFnF67IUrKV6XZNzcRm24R8n3mu7CnYkuBLbvtUuJbw'
+        },
+        body: formData
+      })
+      
+      const result = await response.json();
+      
+      if(result){
+        result.fileInfo.location
+      }
+
+    }
+
+
+  </script>
+
+</body>
+
+</html>

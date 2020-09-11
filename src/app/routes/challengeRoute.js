@@ -38,8 +38,8 @@ module.exports = (app) => {
     '/challenge/:challengeId/certification',
     jwtMiddleware,
     validation.challengeValidation.check.id,
-    validation.certification.photo,
-    validation.certification.existUser,
+    // validation.certification.photo,
+    // validation.certification.existUser,
     challenge.certificateChallenge,
   );
 

@@ -135,7 +135,7 @@ exports.getUserPage = async (req, res) => {
       followerCount: followers.length,
       followingCount: followings.length,
       interestFields: interestFields.map((field) => field.tagName),
-      everydayRecords: everydayRecords.map((record) => record.record),
+      everydayRecords: [...new Set(everydayRecords.map((record) => record.record))],
       todayChallenges,
     };
 
